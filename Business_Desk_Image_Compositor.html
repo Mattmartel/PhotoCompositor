@@ -81,6 +81,12 @@
   .slot.has-image { border-color: var(--rule-strong); background: var(--paper); }
   .slot.active-panel { border-color: var(--red) !important; }
   .slot.drag-over { border-color: var(--red); background: var(--red-dim); }
+  .slot.dragging { opacity: 0.35; }
+  .slot.drop-target { border-color: var(--red) !important; background: var(--red-dim); }
+
+  .drag-handle { color: var(--rule-strong); cursor: grab; font-size: 15px; line-height: 1; user-select: none; flex-shrink: 0; padding-right: 3px; transition: color 0.15s; }
+  .drag-handle:hover { color: var(--muted); }
+  .slot.dragging .drag-handle { cursor: grabbing; }
 
   .slot-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; }
   .slot-num { width: 20px; height: 20px; border-radius: 0; background: var(--paper); border: 1.5px solid var(--rule-strong); display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: var(--mono); font-weight: 600; color: var(--muted); flex-shrink: 0; }
@@ -98,6 +104,13 @@
   .slot-action-btn { flex: 1; background: none; border: none; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; padding: 7px 4px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: color 0.15s, background 0.15s; }
   .slot-action-btn:hover { background: var(--bg); color: var(--ink); }
   .slot-action-btn.danger:hover { background: var(--red-dim); color: var(--red); }
+  .slot-action-btn.is-active { background: var(--red-dim); color: var(--red); }
+  .slot-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .cutout-color-row { padding: 5px 10px 6px; border-top: 1px solid var(--rule); background: var(--bg); }
+  .cutout-color-btn { width: 100%; background: none; border: none; font: inherit; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: left; padding: 0; letter-spacing: 0.02em; transition: color 0.15s; }
+  .cutout-color-btn:hover { color: var(--ink); }
+  .cutout-color-btn.active { color: var(--success); }
   .slot-action-btn + .slot-action-btn { border-left: 1px solid var(--rule); }
 
   /* --- Crop controls --- */
@@ -200,6 +213,33 @@
   .toast.error { background: var(--red); }
 
   #fileInput { display: none; }
+
+  /* --- Guide modal --- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(17,17,17,0.78); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal { background: var(--paper); width: 100%; max-width: 700px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 12px 64px rgba(17,17,17,0.5); }
+  .modal-header { background: var(--ink); color: var(--paper); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-title { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
+  .modal-close { background: none; border: 1.5px solid rgba(255,255,255,0.4); color: var(--paper); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 12px; letter-spacing: 0.04em; transition: background 0.15s; }
+  .modal-close:hover { background: rgba(255,255,255,0.12); }
+  .modal-body { overflow-y: auto; padding: 28px 32px 36px; flex: 1; }
+  .modal-body::-webkit-scrollbar { width: 6px; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--rule-strong); }
+
+  .guide-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+  .guide-section { margin-bottom: 26px; }
+  .guide-section:last-child { margin-bottom: 0; }
+  .guide-h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 2px solid var(--red); }
+  .guide-h2 { font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 12px 0 5px; }
+  .guide-p { font-size: 13px; line-height: 1.65; color: #333; margin-bottom: 7px; }
+  .guide-ul { list-style: none; padding: 0; margin: 0 0 7px; }
+  .guide-ul li { font-size: 13px; line-height: 1.6; color: #333; padding-left: 16px; position: relative; margin-bottom: 4px; }
+  .guide-ul li::before { content: '—'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+  .guide-divider { border: none; border-top: 1px solid var(--rule); margin: 28px 0; grid-column: 1/-1; }
+  .guide-tip { background: var(--red-dim); border-left: 3px solid var(--red); padding: 10px 14px; margin-top: 10px; font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+
+  .topbar-guide-btn { font-size: 11px; font-family: var(--mono); background: transparent; color: var(--paper); border: 1.5px solid rgba(255,255,255,0.5); padding: 3px 12px; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s; font-weight: 500; }
+  .topbar-guide-btn:hover { background: rgba(255,255,255,0.1); }
 </style>
 </head>
 <body>
@@ -212,6 +252,7 @@
     </div>
     <div class="topbar-spacer"></div>
     <span class="topbar-badge">1920 × 1080</span>
+    <button class="topbar-guide-btn" id="guideBtn">? Guide</button>
   </header>
 
   <aside class="sidebar">
@@ -240,6 +281,8 @@
           <button class="dir-btn" data-d="btt"  title="Bottom to top">↑</button>
           <button class="dir-btn" data-d="tlbr" title="Top-left to bottom-right">↘</button>
           <button class="dir-btn" data-d="trbl" title="Top-right to bottom-left">↙</button>
+          <button class="dir-btn" data-d="bltr" title="Bottom-left to top-right">↗</button>
+          <button class="dir-btn" data-d="brtl" title="Bottom-right to top-left">↖</button>
         </div>
       </div>
     </div>
@@ -258,19 +301,17 @@
           <input type="range" class="ctrl-slider" id="ctrlZoom" min="50" max="300" step="1" value="100">
           <span class="ctrl-val" id="ctrlZoomVal">100%</span>
         </div>
-        <div style="display:flex;gap:12px;align-items:flex-start;margin-top:2px;">
-          <div style="flex:1;">
-            <div class="ctrl-row" style="margin-bottom:5px;">
-              <span class="ctrl-label">X</span>
-              <input type="range" class="ctrl-slider" id="ctrlX" min="-100" max="100" step="0.5" value="0">
-              <span class="ctrl-val" id="ctrlXVal">0%</span>
-            </div>
-            <div class="ctrl-row">
-              <span class="ctrl-label">Y</span>
-              <input type="range" class="ctrl-slider" id="ctrlY" min="-100" max="100" step="0.5" value="0">
-              <span class="ctrl-val" id="ctrlYVal">0%</span>
-            </div>
-          </div>
+        <div class="ctrl-row" style="margin-bottom:5px;">
+          <span class="ctrl-label">X</span>
+          <input type="range" class="ctrl-slider" id="ctrlX" min="-100" max="100" step="0.5" value="0">
+          <span class="ctrl-val" id="ctrlXVal">0%</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Y</span>
+          <input type="range" class="ctrl-slider" id="ctrlY" min="-100" max="100" step="0.5" value="0">
+          <span class="ctrl-val" id="ctrlYVal">0%</span>
+        </div>
+        <div style="display:flex;justify-content:center;margin-top:6px;">
           <div class="dpad" id="dpad">
             <div></div>
             <button class="dpad-btn" data-dx="0" data-dy="-5">↑</button>
@@ -287,10 +328,6 @@
         <p class="hint">Or drag image directly on the preview →<br>scroll wheel to zoom</p>
       </div>
 
-      <div class="url-row">
-        <input class="url-input" id="urlInput" type="text" placeholder="Paste resizer URL…">
-        <button class="icon-btn" id="urlAddBtn">+</button>
-      </div>
     </div>
 
     <div class="export-section">
@@ -329,8 +366,93 @@
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept="image/*" multiple>
 
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="guide-h" style="font-size:15px;letter-spacing:0.06em;">USER GUIDE</span>
+      <button class="modal-close" id="guideClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="guide-cols">
+
+        <!-- LEFT COLUMN -->
+        <div>
+          <div class="guide-section">
+            <div class="guide-h">Workflow</div>
+            <ol class="guide-ul" style="padding-left:1.2em;margin:0;">
+              <li class="guide-p"><strong>Pick a template</strong> — choose 2up through 5up, 2×2 grid, or a hero layout.</li>
+              <li class="guide-p"><strong>Drop images</strong> — drag from your desktop onto any slot card, or click the slot to browse.</li>
+              <li class="guide-p"><strong>Adjust crop</strong> — select a slot and use the zoom slider and offset controls to frame each image.</li>
+              <li class="guide-p"><strong>Apply treatment</strong> — choose a colour wash or B&W grade to unify the composite.</li>
+              <li class="guide-p"><strong>Export</strong> — set quality and click Download JPEG.</li>
+            </ol>
+          </div>
+
+          <div class="guide-divider"></div>
+
+          <div class="guide-section">
+            <div class="guide-h">Layouts</div>
+            <div class="guide-p"><strong>2up – 5up</strong> — equal vertical strips. Good for fast, clean comparisons.</div>
+            <div class="guide-p"><strong>2×2 grid</strong> — four equal squares. Works well for product or scene overviews.</div>
+            <div class="guide-p"><strong>1+2 / 2+1 hero</strong> — one large panel plus two stacked panels. Use the large panel for the hero image and the stack for supporting context. Mirror the layout to suit your visual flow.</div>
+            <div class="guide-tip">Tip: switching layouts preserves all loaded images — slots beyond the current count stay in memory and reappear when you switch back.</div>
+          </div>
+
+          <div class="guide-divider"></div>
+
+          <div class="guide-section">
+            <div class="guide-h">Crop &amp; Position</div>
+            <div class="guide-p">Select a slot card to activate the Crop &amp; Position panel. Controls apply only to that slot.</div>
+            <div class="guide-p"><strong>Zoom</strong> — scales the image within its panel. Useful for tightening on a face or removing dead space.</div>
+            <div class="guide-p"><strong>X / Y offset</strong> — nudge the image left/right or up/down. Use the d-pad for quick coarse moves (10 px per step).</div>
+            <div class="guide-tip">Tip: for portrait images in landscape panels, zoom in and shift the Y offset upward to keep the subject's face in frame.</div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+          <div class="guide-section">
+            <div class="guide-h">Colour Treatment</div>
+            <div class="guide-p"><strong>None</strong> — full colour, no overlay.</div>
+            <div class="guide-p"><strong>B&amp;W</strong> — desaturated, natural contrast.</div>
+            <div class="guide-p"><strong>B&amp;W+</strong> — desaturated with boosted contrast and a subtle vignette punch. Best for dramatic single-subject images.</div>
+            <div class="guide-p"><strong>Colour washes</strong> — a tinted gradient sweeps across the full composite. Choose a direction (left→right, diagonal, etc.) and a wash colour. The wash fades from ~78% opacity to transparent, so the image remains readable on the lighter side.</div>
+            <div class="guide-tip">Tip: the wash angle is offset +15° from its named direction for a more editorial feel. Diagonal washes work well with hero layouts.</div>
+          </div>
+
+          <div class="guide-divider"></div>
+
+          <div class="guide-section">
+            <div class="guide-h">Background Removal</div>
+            <div class="guide-p">The <strong>Remove BG</strong> button runs an on-device AI model (no server, no upload). The first use downloads the model (~40 MB); subsequent uses are instant.</div>
+            <div class="guide-p">Once removed, the subject bleeds freely across panel boundaries — creating a dramatic layered effect where the person or object appears to float above the composite grid.</div>
+            <div class="guide-p"><strong>Full colour</strong> — when enabled on a cutout slot, that subject is redrawn in full colour after the document treatment is applied, so it stands out against a B&amp;W or washed background.</div>
+            <div class="guide-tip">Tip: for best results, use a source image where the subject is well-lit against a plain or contrasting background. Re-click Remove BG to toggle it off.</div>
+          </div>
+
+          <div class="guide-divider"></div>
+
+          <div class="guide-section">
+            <div class="guide-h">Design Best Practices</div>
+            <ul class="guide-ul">
+              <li class="guide-p"><strong>Consistent light direction.</strong> Images where light falls from the same side read as a unified set. Mixed lighting draws the eye to the seam.</li>
+              <li class="guide-p"><strong>Limit your palette.</strong> A single colour wash ties disparate photos together far faster than trying to match them individually. Use B&amp;W+ when the images are very different in tone.</li>
+              <li class="guide-p"><strong>Hero image earns its space.</strong> In a 1+2 or 2+1 layout the large panel should carry the most visual weight — a wide shot, a strong face, or bold graphic. Reserve the stack for supporting or contextual images.</li>
+              <li class="guide-p"><strong>Keep subjects out of the gutter.</strong> Faces and focal points cut by a panel gap look accidental. Use the X/Y offset and zoom to push important content away from the split.</li>
+              <li class="guide-p"><strong>Use cutout sparingly.</strong> One floating subject per composite is striking. Two or more compete and flatten the effect.</li>
+              <li class="guide-p"><strong>Export quality.</strong> 90% (default) is indistinguishable from 100% at screen sizes and produces a much smaller file. Drop to 80% for email or social.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /guide-cols -->
+    </div><!-- /modal-body -->
+  </div><!-- /modal -->
+</div><!-- /modal-overlay -->
+
 <script>
 const CW = 1920, CH = 1080, GAP = 15;
+function randomId() { return Math.random().toString(36).slice(2, 8); }
 const PLACEHOLDER_COLORS = ['#eeeae2','#ece7dd','#efe9df','#ebe6dc','#ede8de'];
 
 // Layout definitions — each has an id, display label, and panel count
@@ -402,6 +524,7 @@ let state = {
   pendingSlot: null,
   treatment: 'none',
   fadeDir: 'ltr',
+  fileId: randomId(),
 };
 
 // Canvas
@@ -412,12 +535,14 @@ function renderCanvas() {
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, CW, CH);
   const panels = getPanels(state.layout);
+  // Phase 1 — all panels clipped to their rectangle (skip cutouts)
   panels.forEach((p, i) => {
+    const slot = state.slots[i];
+    if (slot?.cutout) return;
     ctx.save();
     ctx.beginPath();
     ctx.rect(p.x, p.y, p.w, p.h);
     ctx.clip();
-    const slot = state.slots[i];
     if (slot && slot.el) {
       drawSlotImage(ctx, slot, p);
     } else {
@@ -440,7 +565,27 @@ function renderCanvas() {
     }
     ctx.restore();
   });
+
+  // Phase 2 — cutout images drawn without clipping; subject bleeds across panel boundaries
+  panels.forEach((p, i) => {
+    const slot = state.slots[i];
+    if (!slot?.cutout || !slot.cutoutEl) return;
+    drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
+    if (state.activeSlot === i) {
+      ctx.strokeStyle = 'rgba(193,18,31,0.75)';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(p.x + 2.5, p.y + 2.5, p.w - 5, p.h - 5);
+    }
+  });
+
   applyDocumentTreatment();
+
+  // Phase 3 — re-draw cutouts that are set to preserve full colour, on top of any treatment
+  panels.forEach((p, i) => {
+    const slot = state.slots[i];
+    if (!slot?.cutout || !slot.cutoutEl || !slot.preserveColor) return;
+    drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
+  });
 }
 
 const WASH_COLORS = { red: '#C1121F', blue: '#0D3B6E', green: '#1A5C3A', yellow: '#D4A000' };
@@ -497,7 +642,7 @@ function applyDocumentTreatment() {
   ctx.putImageData(id, 0, 0);
 
   // Each nominal direction has a base angle; +15° gives a natural tilt
-  const DIR_ANGLES = { ltr: 0, rtl: 180, ttb: 90, btt: 270, tlbr: 45, trbl: 135 };
+  const DIR_ANGLES = { ltr: 0, rtl: 180, ttb: 90, btt: 270, tlbr: 45, trbl: 135, bltr: 315, brtl: 225 };
   const angle = ((DIR_ANGLES[state.fadeDir] ?? 0) + 15) * Math.PI / 180;
   const ca = Math.cos(angle), sa = Math.sin(angle);
   const proj = [[0,0],[CW,0],[0,CH],[CW,CH]].map(([x,y]) => x*ca + y*sa);
@@ -537,6 +682,7 @@ window.addEventListener('resize', () => { if (state.previewZoom === 'fit') apply
 
 // Canvas interaction — drag to pan
 let drag = null;
+let slotDragSrc = null;
 
 function panelAtPoint(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
@@ -754,24 +900,29 @@ function buildSlots() {
     const isActive = state.activeSlot === i;
     const div = document.createElement('div');
     div.className = 'slot' + (slot ? ' has-image' : '') + (isActive ? ' active-panel' : '');
+    div.setAttribute('draggable', 'true');
     if (slot) {
       div.innerHTML = `
         <div class="slot-header" data-i="${i}">
+          <div class="drag-handle" title="Drag to reorder">⠿</div>
           <div class="slot-num">${i+1}</div>
           <div class="slot-info">
             <div class="slot-filename">${slot.name}</div>
             <div class="slot-dims">${slot.width}×${slot.height}</div>
           </div>
         </div>
-        <img class="slot-thumb" src="${slot.src}" alt="">
+        <img class="slot-thumb" src="${slot.src}" alt="" draggable="false">
+        ${slot.cutout ? `<div class="cutout-color-row"><button class="cutout-color-btn${slot.preserveColor ? ' active' : ''}" data-action="preservecolor" data-i="${i}">${slot.preserveColor ? '✓ Full colour (ignores treatment)' : '○ Full colour (ignores treatment)'}</button></div>` : ''}
         <div class="slot-actions">
           <button class="slot-action-btn" data-action="crop" data-i="${i}">✦ Crop</button>
           <button class="slot-action-btn" data-action="replace" data-i="${i}">↺ Replace</button>
+          <button class="slot-action-btn${slot.cutout ? ' is-active' : ''}" data-action="cutout" data-i="${i}"${slot.cutoutLoading ? ' disabled' : ''}>${slot.cutoutLoading ? '⏳ BG' : slot.cutout ? '✓ BG' : '✂ BG'}</button>
           <button class="slot-action-btn danger" data-action="remove" data-i="${i}">✕</button>
         </div>`;
     } else {
       div.innerHTML = `
         <div class="slot-header">
+          <div class="drag-handle" title="Drag to reorder">⠿</div>
           <div class="slot-num">${i+1}</div>
           <div class="slot-info">
             <div class="slot-filename" style="color:var(--text3)">Empty</div>
@@ -780,14 +931,57 @@ function buildSlots() {
         </div>
         <div class="slot-empty-area" data-action="pick" data-i="${i}">Click or drop an image</div>`;
     }
-    div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
-    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
-    div.addEventListener('drop', e => {
-      e.preventDefault(); div.classList.remove('drag-over');
-      if (e.dataTransfer.files.length) loadFileIntoSlot(e.dataTransfer.files[0], i);
+
+    // Card reorder — dragstart
+    div.addEventListener('dragstart', e => {
+      if (e.target.closest('.slot-actions, .slot-empty-area')) { e.preventDefault(); return; }
+      slotDragSrc = i;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/x-slot-index', String(i));
+      setTimeout(() => div.classList.add('dragging'), 0);
     });
+
+    div.addEventListener('dragend', () => {
+      slotDragSrc = null;
+      div.classList.remove('dragging');
+      document.querySelectorAll('.slot').forEach(s => s.classList.remove('drop-target', 'drag-over'));
+    });
+
+    div.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (slotDragSrc !== null && slotDragSrc !== i) {
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('drop-target'));
+        div.classList.add('drop-target');
+      } else if (slotDragSrc === null) {
+        div.classList.add('drag-over');
+      }
+    });
+
+    div.addEventListener('dragleave', e => {
+      if (!div.contains(e.relatedTarget)) div.classList.remove('drag-over', 'drop-target');
+    });
+
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      div.classList.remove('drag-over', 'drop-target');
+      const srcStr = e.dataTransfer.getData('text/x-slot-index');
+      if (srcStr !== '') {
+        const from = parseInt(srcStr);
+        if (from !== i) {
+          [state.slots[from], state.slots[i]] = [state.slots[i], state.slots[from]];
+          if (state.activeSlot === from) state.activeSlot = i;
+          else if (state.activeSlot === i) state.activeSlot = from;
+          buildSlots(); syncCropControls(); renderCanvas(); updateUI();
+        }
+      } else if (e.dataTransfer.files.length) {
+        loadFileIntoSlot(e.dataTransfer.files[0], i);
+      }
+      slotDragSrc = null;
+    });
+
     container.appendChild(div);
   }
+
   container.querySelectorAll('[data-action]').forEach(el => {
     el.addEventListener('click', () => {
       const action = el.dataset.action, idx = parseInt(el.dataset.i);
@@ -800,6 +994,11 @@ function buildSlots() {
         document.getElementById('fileInput').click();
       } else if (action === 'crop') {
         setActiveSlot(idx);
+      } else if (action === 'cutout') {
+        applyBgRemoval(idx);
+      } else if (action === 'preservecolor') {
+        state.slots[idx].preserveColor = !state.slots[idx].preserveColor;
+        buildSlots(); renderCanvas();
       }
     });
   });
@@ -818,7 +1017,7 @@ function loadFileIntoSlot(file, idx) {
   reader.onload = e => {
     const el = new Image();
     el.onload = () => {
-      state.slots[idx] = { src: e.target.result, name: file.name, width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0 };
+      state.slots[idx] = { src: e.target.result, name: file.name, width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0, cutout: false, cutoutEl: null, cutoutLoading: false, preserveColor: false };
       if (state.activeSlot === null) state.activeSlot = idx;
       buildSlots(); syncCropControls(); renderCanvas(); updateUI();
       showToast(`Panel ${idx+1} loaded`, 'success');
@@ -828,21 +1027,6 @@ function loadFileIntoSlot(file, idx) {
   reader.readAsDataURL(file);
 }
 
-function loadUrlIntoNextSlot(url) {
-  const n = getLayout(state.layout).count;
-  const next = Array.from({length: n}, (_, i) => i).find(i => !state.slots[i]);
-  if (next === undefined) { showToast('All panels full', 'error'); return; }
-  const el = new Image();
-  el.crossOrigin = 'anonymous';
-  el.onload = () => {
-    state.slots[next] = { src: url, name: url.split('/').pop().split('?')[0] || 'image', width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0 };
-    if (state.activeSlot === null) state.activeSlot = next;
-    buildSlots(); syncCropControls(); renderCanvas(); updateUI();
-    showToast(`Panel ${next+1} loaded`, 'success');
-  };
-  el.onerror = () => showToast('Could not load URL (CORS?)', 'error');
-  el.src = url;
-}
 
 document.getElementById('fileInput').addEventListener('change', e => {
   const files = Array.from(e.target.files);
@@ -863,6 +1047,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 document.body.addEventListener('dragover', e => e.preventDefault());
 document.body.addEventListener('drop', e => {
   e.preventDefault();
+  if (e.dataTransfer.getData('text/x-slot-index') !== '') return;
   const n = getLayout(state.layout).count;
   Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).forEach(f => {
     const next = Array.from({length: n}, (_, i) => i).find(i => !state.slots[i]);
@@ -875,17 +1060,56 @@ document.getElementById('filenameInput').addEventListener('input', function() {
   updateUI();
 });
 
-document.getElementById('urlAddBtn').addEventListener('click', () => {
-  const val = document.getElementById('urlInput').value.trim();
-  if (val) { loadUrlIntoNextSlot(val); document.getElementById('urlInput').value = ''; }
-});
-document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('urlAddBtn').click(); });
 
 document.getElementById('qualitySlider').addEventListener('input', function() {
   state.quality = this.value / 100;
   document.getElementById('qualityVal').textContent = this.value + '%';
   updateUI();
 });
+
+async function applyBgRemoval(idx) {
+  const slot = state.slots[idx];
+  if (!slot) return;
+
+  // Toggle off if already active
+  if (slot.cutout) {
+    slot.cutout = false;
+    buildSlots(); renderCanvas();
+    return;
+  }
+
+  slot.cutoutLoading = true;
+  buildSlots();
+  showToast('Removing background — downloading model on first use…');
+
+  try {
+    const { removeBackground } = await import('https://esm.sh/@imgly/background-removal');
+
+    // Draw the already-loaded image to an offscreen canvas to get a clean blob
+    const offscreen = document.createElement('canvas');
+    offscreen.width = slot.el.naturalWidth;
+    offscreen.height = slot.el.naturalHeight;
+    offscreen.getContext('2d').drawImage(slot.el, 0, 0);
+    const inputBlob = await new Promise(res => offscreen.toBlob(res, 'image/png'));
+
+    const resultBlob = await removeBackground(inputBlob);
+    const url = URL.createObjectURL(resultBlob);
+    const cutoutEl = new Image();
+    cutoutEl.onload = () => {
+      slot.cutoutEl = cutoutEl;
+      slot.cutout = true;
+      slot.cutoutLoading = false;
+      buildSlots(); syncCropControls(); renderCanvas();
+      showToast('Background removed — subject will bleed across panels', 'success');
+    };
+    cutoutEl.src = url;
+  } catch (err) {
+    slot.cutoutLoading = false;
+    buildSlots();
+    showToast('Background removal failed', 'error');
+    console.error(err);
+  }
+}
 
 document.getElementById('exportBtn').addEventListener('click', () => {
   const prev = state.activeSlot;
@@ -894,7 +1118,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   try {
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/jpeg', state.quality);
-    const fname = (document.getElementById('filenameInput').value.trim() || `business-desk-composite-${state.layout}`).replace(/\.jpg$/i,'');
+    const fname = (document.getElementById('filenameInput').value.trim() || `businessdesk_image${state.fileId}`).replace(/\.jpg$/i,'');
     a.download = fname + '.jpg';
     a.click();
     showToast('JPG downloaded', 'success');
@@ -907,7 +1131,8 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   state.slots = []; state.layout = '2v'; state.activeSlot = null; state.pendingSlot = null;
-  state.treatment = 'none'; state.fadeDir = 'ltr';
+  state.treatment = 'none'; state.fadeDir = 'ltr'; state.fileId = randomId();
+  delete document.getElementById('filenameInput').dataset.userEdited;
   document.querySelectorAll('#treatRow .treat-btn').forEach(b => b.classList.toggle('active', b.dataset.t === 'none'));
   document.getElementById('fadeControls').style.display = 'none';
   document.querySelectorAll('.dir-btn').forEach(b => b.classList.toggle('active', b.dataset.d === 'ltr'));
@@ -921,8 +1146,8 @@ function updateUI() {
   document.getElementById('slotCount').textContent = `${filled}/${n}`;
   document.getElementById('exportBtn').disabled = filled < 2;
   const fnInput = document.getElementById('filenameInput');
-  if (!fnInput.dataset.userEdited) fnInput.value = `business-desk-composite-${state.layout}`;
-  const fname = (fnInput.value.trim() || `business-desk-composite-${state.layout}`).replace(/\.jpg$/i,'');
+  if (!fnInput.dataset.userEdited) fnInput.value = `businessdesk_image${state.fileId}`;
+  const fname = (fnInput.value.trim() || `businessdesk_image${state.fileId}`).replace(/\.jpg$/i,'');
   document.getElementById('exportMeta').innerHTML = `<span>${fname}.jpg</span> · 1920×1080 · ${document.getElementById('qualitySlider').value}% quality`;
   document.getElementById('previewLabel').textContent = `${layout.label} template · ${filled} of ${n} filled`;
 }
@@ -940,6 +1165,19 @@ buildSlots();
 renderCanvas();
 applyPreviewZoom();
 updateUI();
+
+// Guide modal
+(function() {
+  const btn   = document.getElementById('guideBtn');
+  const modal = document.getElementById('guideModal');
+  const close = document.getElementById('guideClose');
+  btn.addEventListener('click', () => modal.classList.add('open'));
+  close.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+})();
 </script>
+
+
 </body>
 </html>

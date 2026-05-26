@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BusinessDesk Image Compositor</title>
+<title>BusinessDesk Portrait Compositor</title>
 <style>
   @import url('https://rsms.me/inter/inter.css');
 
@@ -41,7 +41,6 @@
 
   .shell { display: grid; grid-template-columns: 320px 1fr; grid-template-rows: 60px 1fr; height: 100vh; overflow: hidden; }
 
-  /* --- Top bar (BusinessDesk masthead) --- */
   .topbar {
     grid-column: 1/-1;
     background: var(--ink);
@@ -58,7 +57,6 @@
   .topbar-spacer { flex: 1; }
   .topbar-badge { font-size: 11px; font-family: var(--mono); background: transparent; color: var(--paper); border: 1.5px solid rgba(255,255,255,0.5); padding: 3px 10px; letter-spacing: 0.02em; }
 
-  /* --- Sidebar (left pane) --- */
   .sidebar { background: var(--paper); border-right: 1px solid var(--rule); overflow-y: auto; display: flex; flex-direction: column; }
   .sidebar::-webkit-scrollbar { width: 6px; }
   .sidebar::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 0; }
@@ -67,7 +65,6 @@
   .section-head { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
   .step { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: none; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--paper); font-weight: 700; flex-shrink: 0; letter-spacing: 0; }
 
-  /* --- Template picker --- */
   .tmpl-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
   .tmpl-btn { border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--field); cursor: pointer; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: background 0.15s, border-color 0.15s; }
   .tmpl-btn:hover { background: var(--bg); }
@@ -75,7 +72,6 @@
   .tlabel { font-size: 10.5px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.02em; }
   .tmpl-btn.active .tlabel { color: var(--red); font-weight: 600; }
 
-  /* --- Slots --- */
   .slots { display: flex; flex-direction: column; gap: 8px; }
   .slot { border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--field); overflow: hidden; transition: border-color 0.15s, background 0.15s; }
   .slot.has-image { border-color: var(--rule-strong); background: var(--paper); }
@@ -83,6 +79,18 @@
   .slot.drag-over { border-color: var(--red); background: var(--red-dim); }
   .slot.dragging { opacity: 0.35; }
   .slot.drop-target { border-color: var(--red) !important; background: var(--red-dim); }
+
+  /* Overlay slot special styling */
+  .overlay-slot { border: 1.5px dashed var(--rule-strong); }
+  .overlay-slot.has-image { border-style: solid; border-color: var(--rule-strong); }
+  .overlay-slot.active-panel { border-color: var(--red) !important; border-style: solid !important; }
+  .overlay-divider { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; }
+  .overlay-divider-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .overlay-divider-line { flex: 1; height: 1px; background: var(--rule); }
+  .overlay-bg-btn { width: 100%; background: var(--ink); border: none; color: var(--paper); font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 8px 4px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: background 0.15s; letter-spacing: 0.04em; }
+  .overlay-bg-btn:hover { background: var(--red); }
+  .overlay-bg-btn.is-active { background: var(--success); }
+  .overlay-bg-btn:disabled { opacity: 0.45; cursor: not-allowed; background: var(--ink); }
 
   .drag-handle { color: var(--rule-strong); cursor: grab; font-size: 15px; line-height: 1; user-select: none; flex-shrink: 0; padding-right: 3px; transition: color 0.15s; }
   .drag-handle:hover { color: var(--muted); }
@@ -106,14 +114,13 @@
   .slot-action-btn.danger:hover { background: var(--red-dim); color: var(--red); }
   .slot-action-btn.is-active { background: var(--red-dim); color: var(--red); }
   .slot-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .slot-action-btn + .slot-action-btn { border-left: 1px solid var(--rule); }
 
   .cutout-color-row { padding: 5px 10px 6px; border-top: 1px solid var(--rule); background: var(--bg); }
   .cutout-color-btn { width: 100%; background: none; border: none; font: inherit; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: left; padding: 0; letter-spacing: 0.02em; transition: color 0.15s; }
   .cutout-color-btn:hover { color: var(--ink); }
   .cutout-color-btn.active { color: var(--success); }
-  .slot-action-btn + .slot-action-btn { border-left: 1px solid var(--rule); }
 
-  /* --- Crop controls --- */
   .crop-controls { background: var(--bg); border: 1.5px solid var(--rule-strong); border-radius: var(--radius); padding: 12px 14px; display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
   .crop-controls.visible { display: flex; }
   .crop-controls-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); }
@@ -134,7 +141,6 @@
   .ctrl-reset { background: var(--paper); border: 1.5px solid var(--rule-strong); border-radius: var(--radius); color: var(--ink); font: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 10px; cursor: pointer; width: 100%; margin-top: 2px; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s, border-color 0.15s; }
   .ctrl-reset:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-  /* --- Treatment buttons --- */
   .treat-row { display: flex; gap: 4px; }
   .treat-btn {
     flex: 1; padding: 6px 3px;
@@ -150,7 +156,6 @@
   .treat-swatch { min-width: 22px; max-width: 34px; font-size: 0; color: transparent; }
   .treat-swatch.active { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ink); border-color: transparent !important; }
 
-  /* --- Fade direction buttons --- */
   .fade-controls { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
   .fade-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
   .dir-row { display: flex; gap: 4px; flex: 1; }
@@ -160,7 +165,6 @@
 
   .hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; line-height: 1.5; }
 
-  /* --- URL input + icon button --- */
   .url-row { display: flex; gap: 6px; margin-top: 12px; }
   .url-input { flex: 1; background: var(--field); border: 1.5px solid var(--rule-strong); border-radius: var(--radius); color: var(--ink); font: inherit; font-size: 12px; font-family: var(--mono); padding: 8px 10px; outline: none; transition: border-color 0.15s, background 0.15s; }
   .url-input::placeholder { color: var(--muted-soft); }
@@ -168,7 +172,6 @@
   .icon-btn { background: var(--paper); border: 1.5px solid var(--rule-strong); border-radius: var(--radius); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; padding: 0 12px; display: flex; align-items: center; transition: background 0.15s, color 0.15s, border-color 0.15s; }
   .icon-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-  /* --- Export section --- */
   .export-section { padding: 16px 18px 18px; margin-top: auto; border-top: 1px solid var(--rule); background: var(--paper); }
   .quality-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .quality-label { font-size: 11.5px; color: var(--ink); font-weight: 600; white-space: nowrap; letter-spacing: 0.02em; }
@@ -187,7 +190,6 @@
   .reset-btn { width: 100%; margin-top: 8px; padding: 9px; background: transparent; color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--radius); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s; }
   .reset-btn:hover { background: var(--ink); color: var(--paper); }
 
-  /* --- Preview pane --- */
   .preview-pane { background: #eeeae2; display: flex; flex-direction: column; overflow: hidden; }
   .preview-toolbar { display: flex; align-items: center; padding: 10px 18px; gap: 12px; border-bottom: 1px solid var(--rule); background: var(--paper); flex-shrink: 0; }
   .preview-toolbar-label { font-size: 11.5px; color: var(--muted); flex: 1; font-family: var(--mono); letter-spacing: 0.02em; }
@@ -206,15 +208,13 @@
   #canvas { display: block; border-radius: 0; box-shadow: 0 2px 24px rgba(17,17,17,0.15), 0 0 0 1px var(--rule-strong); cursor: grab; }
   #canvas:active { cursor: grabbing; }
 
-  /* --- Toast --- */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--paper); border: none; padding: 14px 20px; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; opacity: 0; transform: translateY(8px); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; white-space: nowrap; z-index: 100; max-width: 360px; }
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.success { background: var(--success); }
   .toast.error { background: var(--red); }
 
-  #fileInput { display: none; }
+  #fileInput, #overlayFileInput { display: none; }
 
-  /* --- Guide modal --- */
   .modal-overlay { position: fixed; inset: 0; background: rgba(17,17,17,0.78); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .modal-overlay.open { opacity: 1; pointer-events: auto; }
   .modal { background: var(--paper); width: 100%; max-width: 700px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 12px 64px rgba(17,17,17,0.5); }
@@ -247,11 +247,11 @@
 
   <header class="topbar">
     <div class="topbar-text">
-      <div class="topbar-title">BusinessDesk · Image compositor</div>
-      <div class="topbar-sub">Composite images to 1920 × 1080 JPG</div>
+      <div class="topbar-title">BusinessDesk · Portrait compositor</div>
+      <div class="topbar-sub">Full-bleed image with portrait overlay · 1920 × 1080 JPG</div>
     </div>
     <div class="topbar-spacer"></div>
-    <span class="topbar-badge">1920 × 1080</span>
+    <span class="topbar-badge">v2 · 1920 × 1080</span>
     <button class="topbar-guide-btn" id="guideBtn">? Guide</button>
   </header>
 
@@ -298,7 +298,7 @@
         <div class="crop-controls-title" id="cropTitle">Panel 1 — crop &amp; position</div>
         <div class="ctrl-row">
           <span class="ctrl-label">Zoom</span>
-          <input type="range" class="ctrl-slider" id="ctrlZoom" min="50" max="300" step="1" value="100">
+          <input type="range" class="ctrl-slider" id="ctrlZoom" min="10" max="300" step="1" value="100">
           <span class="ctrl-val" id="ctrlZoomVal">100%</span>
         </div>
         <div class="ctrl-row" style="margin-bottom:5px;">
@@ -324,8 +324,8 @@
             <div></div>
           </div>
         </div>
-        <button class="ctrl-reset" id="ctrlReset">Reset crop</button>
-        <p class="hint">Or drag image directly on the preview →<br>scroll wheel to zoom</p>
+        <button class="ctrl-reset" id="ctrlReset">Reset position</button>
+        <p class="hint">Or drag directly on the preview →<br>scroll wheel to zoom</p>
       </div>
 
     </div>
@@ -339,10 +339,10 @@
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
         <span class="quality-label" style="white-space:nowrap;">Filename</span>
-        <input class="url-input" id="filenameInput" type="text" value="business-desk-composite-2v" style="font-size:11px;padding:5px 8px;">
+        <input class="url-input" id="filenameInput" type="text" value="business-desk-portrait" style="font-size:11px;padding:5px 8px;">
         <span style="font-size:11px;color:var(--text3);flex-shrink:0;">.jpg</span>
       </div>
-      <div class="export-meta" id="exportMeta"><span>business-desk-composite-2v.jpg</span> · 1920×1080</div>
+      <div class="export-meta" id="exportMeta"><span>business-desk-portrait.jpg</span> · 1920×1080</div>
       <button class="export-btn" id="exportBtn" disabled>Download JPG</button>
       <button class="reset-btn" id="resetBtn">Reset all</button>
     </div>
@@ -350,7 +350,7 @@
 
   <main class="preview-pane">
     <div class="preview-toolbar">
-      <span class="preview-toolbar-label" id="previewLabel">2up template · 0 of 2 filled</span>
+      <span class="preview-toolbar-label" id="previewLabel">1up template · 0 of 1 filled</span>
       <div class="zoom-btns">
         <button class="zoom-btn" data-zoom="fit">Fit</button>
         <button class="zoom-btn active" data-zoom="50">50%</button>
@@ -365,6 +365,7 @@
 
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept="image/*" multiple>
+<input type="file" id="overlayFileInput" accept="image/*">
 
 <div class="modal-overlay" id="guideModal">
   <div class="modal">
@@ -375,100 +376,90 @@
     <div class="modal-body">
       <div class="guide-cols">
 
-        <!-- LEFT COLUMN -->
         <div>
           <div class="guide-section">
             <div class="guide-h">Workflow</div>
             <ol class="guide-ul" style="padding-left:1.2em;margin:0;">
-              <li class="guide-p"><strong>Pick a template</strong> — choose 2up through 5up, 2×2 grid, or a hero layout.</li>
-              <li class="guide-p"><strong>Drop images</strong> — drag from your desktop onto any slot card, or click the slot to browse.</li>
-              <li class="guide-p"><strong>Adjust crop</strong> — select a slot and use the zoom slider and offset controls to frame each image.</li>
-              <li class="guide-p"><strong>Apply treatment</strong> — choose a colour wash or B&W grade to unify the composite.</li>
-              <li class="guide-p"><strong>Export</strong> — set quality and click Download JPEG.</li>
+              <li class="guide-p"><strong>Pick a template</strong> — choose 1up (full-bleed + portrait overlay) or 2up–5up multi-panel layouts.</li>
+              <li class="guide-p"><strong>Drop a background image</strong> into the main slot. For 1up, this fills the entire 1920×1080 frame.</li>
+              <li class="guide-p"><strong>Add a portrait overlay</strong> (1up only) — load a photo into the Portrait overlay slot, then click Remove BG to cut out the subject. The portrait floats over the background.</li>
+              <li class="guide-p"><strong>Adjust position</strong> — click either slot to activate crop controls. Drag on the preview or use sliders to reposition.</li>
+              <li class="guide-p"><strong>Apply treatment</strong> — choose a colour wash or B&amp;W grade. The portrait overlay is always redrawn in full colour on top.</li>
+              <li class="guide-p"><strong>Export</strong> — set quality and click Download JPG.</li>
             </ol>
           </div>
 
           <div class="guide-divider"></div>
 
           <div class="guide-section">
-            <div class="guide-h">Layouts</div>
-            <div class="guide-p"><strong>2up – 5up</strong> — equal vertical strips. Good for fast, clean comparisons.</div>
-            <div class="guide-p"><strong>2×2 grid</strong> — four equal squares. Works well for product or scene overviews.</div>
-            <div class="guide-p"><strong>1+2 / 2+1 hero</strong> — one large panel plus two stacked panels. Use the large panel for the hero image and the stack for supporting context. Mirror the layout to suit your visual flow.</div>
-            <div class="guide-tip">Tip: switching layouts preserves all loaded images — slots beyond the current count stay in memory and reappear when you switch back.</div>
+            <div class="guide-h">1up — Full-bleed + Portrait</div>
+            <div class="guide-p">The <strong>1up</strong> template fills the entire canvas with a single background image. A second image — the portrait overlay — is composited on top with its background removed.</div>
+            <div class="guide-p">The portrait scales to fit the canvas height by default. Use the Zoom and X/Y sliders (or drag on the canvas) to position it left, right, or anywhere you like.</div>
+            <div class="guide-tip">Tip: combine a B&amp;W or colour-washed background with a full-colour portrait for maximum editorial impact. The portrait is always redrawn in full colour above any treatment.</div>
           </div>
 
           <div class="guide-divider"></div>
 
           <div class="guide-section">
             <div class="guide-h">Crop &amp; Position</div>
-            <div class="guide-p">Select a slot card to activate the Crop &amp; Position panel. Controls apply only to that slot.</div>
-            <div class="guide-p"><strong>Zoom</strong> — scales the image within its panel. Useful for tightening on a face or removing dead space.</div>
-            <div class="guide-p"><strong>X / Y offset</strong> — nudge the image left/right or up/down. Use the d-pad for quick coarse moves (10 px per step).</div>
-            <div class="guide-tip">Tip: for portrait images in landscape panels, zoom in and shift the Y offset upward to keep the subject's face in frame.</div>
+            <div class="guide-p">Click a slot card to activate its crop controls. Controls apply only to that slot.</div>
+            <div class="guide-p"><strong>Background slot:</strong> Zoom and X/Y offset pan within the panel frame. Drag on the preview or use the d-pad for coarse moves.</div>
+            <div class="guide-p"><strong>Portrait overlay:</strong> Zoom scales the cut-out subject. X/Y offsets move it across the canvas. Drag on the preview to reposition.</div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
         <div>
+          <div class="guide-section">
+            <div class="guide-h">Background Removal</div>
+            <div class="guide-p">The <strong>Remove BG</strong> button runs an on-device AI model — no server, no upload. First use downloads the model (~40 MB); subsequent uses are instant.</div>
+            <div class="guide-p">Once removed, only the subject is rendered. It can then be zoomed and repositioned freely across the full canvas.</div>
+            <div class="guide-tip">Tip: for best results use a source photo where the subject is well-lit against a plain or contrasting background. Re-click Remove BG to toggle off.</div>
+          </div>
+
+          <div class="guide-divider"></div>
+
           <div class="guide-section">
             <div class="guide-h">Colour Treatment</div>
             <div class="guide-p"><strong>None</strong> — full colour, no overlay.</div>
             <div class="guide-p"><strong>B&amp;W</strong> — desaturated, natural contrast.</div>
-            <div class="guide-p"><strong>B&amp;W+</strong> — desaturated with boosted contrast and a subtle vignette punch. Best for dramatic single-subject images.</div>
-            <div class="guide-p"><strong>Colour washes</strong> — a tinted gradient sweeps across the full composite. Choose a direction (left→right, diagonal, etc.) and a wash colour. The wash fades from ~78% opacity to transparent, so the image remains readable on the lighter side.</div>
-            <div class="guide-tip">Tip: the wash angle is offset +15° from its named direction for a more editorial feel. Diagonal washes work well with hero layouts.</div>
+            <div class="guide-p"><strong>B&amp;W+</strong> — desaturated with boosted contrast. Best for dramatic single-subject images.</div>
+            <div class="guide-p"><strong>Colour washes</strong> — a tinted gradient across the composite. Choose a direction and wash colour. The portrait overlay is always redrawn in full colour above the treatment.</div>
           </div>
 
           <div class="guide-divider"></div>
 
           <div class="guide-section">
-            <div class="guide-h">Background Removal</div>
-            <div class="guide-p">The <strong>Remove BG</strong> button runs an on-device AI model (no server, no upload). The first use downloads the model (~40 MB); subsequent uses are instant.</div>
-            <div class="guide-p">Once removed, the subject bleeds freely across panel boundaries — creating a dramatic layered effect where the person or object appears to float above the composite grid.</div>
-            <div class="guide-p"><strong>Full colour</strong> — when enabled on a cutout slot, that subject is redrawn in full colour after the document treatment is applied, so it stands out against a B&amp;W or washed background.</div>
-            <div class="guide-tip">Tip: for best results, use a source image where the subject is well-lit against a plain or contrasting background. Re-click Remove BG to toggle it off.</div>
-          </div>
-
-          <div class="guide-divider"></div>
-
-          <div class="guide-section">
-            <div class="guide-h">Design Best Practices</div>
-            <ul class="guide-ul">
-              <li class="guide-p"><strong>Consistent light direction.</strong> Images where light falls from the same side read as a unified set. Mixed lighting draws the eye to the seam.</li>
-              <li class="guide-p"><strong>Limit your palette.</strong> A single colour wash ties disparate photos together far faster than trying to match them individually. Use B&amp;W+ when the images are very different in tone.</li>
-              <li class="guide-p"><strong>Hero image earns its space.</strong> In a 1+2 or 2+1 layout the large panel should carry the most visual weight — a wide shot, a strong face, or bold graphic. Reserve the stack for supporting or contextual images.</li>
-              <li class="guide-p"><strong>Keep subjects out of the gutter.</strong> Faces and focal points cut by a panel gap look accidental. Use the X/Y offset and zoom to push important content away from the split.</li>
-              <li class="guide-p"><strong>Use cutout sparingly.</strong> One floating subject per composite is striking. Two or more compete and flatten the effect.</li>
-              <li class="guide-p"><strong>Export quality.</strong> 90% (default) is indistinguishable from 100% at screen sizes and produces a much smaller file. Drop to 80% for email or social.</li>
-            </ul>
+            <div class="guide-h">Multi-panel Layouts</div>
+            <div class="guide-p">The 2up–5up layouts divide the canvas into equal vertical strips. 2×2 creates four squares. 1+2 and 2+1 are hero layouts with one large panel and two stacked panels.</div>
+            <div class="guide-p">In multi-panel mode the portrait overlay is not available — use the ✂ BG button on any individual slot to cut out a subject and let it bleed across panel boundaries instead.</div>
           </div>
         </div>
 
-      </div><!-- /guide-cols -->
-    </div><!-- /modal-body -->
-  </div><!-- /modal -->
-</div><!-- /modal-overlay -->
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 const CW = 1920, CH = 1080, GAP = 15;
 function randomId() { return Math.random().toString(36).slice(2, 8); }
 const PLACEHOLDER_COLORS = ['#eeeae2','#ece7dd','#efe9df','#ebe6dc','#ede8de'];
 
-// Layout definitions — each has an id, display label, and panel count
 const LAYOUTS = [
-  { id: '2v',  label: '2up',  count: 2 },
-  { id: '3v',  label: '3up',  count: 3 },
-  { id: '4v',  label: '4up',  count: 4 },
-  { id: '5v',  label: '5up',  count: 5 },
-  { id: '2x2', label: '2×2',  count: 4 },
-  { id: '1+2', label: '1+2',  count: 3 },
-  { id: '2+1', label: '2+1',  count: 3 },
+  { id: '1up',  label: '1up',  count: 1 },
+  { id: '2v',   label: '2up',  count: 2 },
+  { id: '3v',   label: '3up',  count: 3 },
+  { id: '4v',   label: '4up',  count: 4 },
+  { id: '5v',   label: '5up',  count: 5 },
+  { id: '2x2',  label: '2×2',  count: 4 },
+  { id: '1+2',  label: '1+2',  count: 3 },
+  { id: '2+1',  label: '2+1',  count: 3 },
 ];
 
 function getLayout(id) { return LAYOUTS.find(l => l.id === id); }
 
 function getPanels(layoutId) {
+  if (layoutId === '1up') return [{ x: 0, y: 0, w: CW, h: CH }];
   if (layoutId === '2x2') return grid2x2();
   if (layoutId === '1+2') return heroLeft();
   if (layoutId === '2+1') return heroRight();
@@ -516,8 +507,11 @@ function heroRight() {
 }
 
 let state = {
-  layout: '2v',
+  layout: '1up',
   slots: [],
+  overlaySlot: null,
+  activeIsOverlay: false,
+  pendingOverlay: false,
   quality: 0.90,
   previewZoom: '50',
   activeSlot: null,
@@ -527,15 +521,33 @@ let state = {
   fileId: randomId(),
 };
 
-// Canvas
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+
+// Draw overlay portrait — scales to canvas height, positionable via offsetX/Y
+function drawOverlayImage(slot) {
+  const el = slot.cutoutEl;
+  if (!el) return;
+  const { zoom = 1, offsetX = 0, offsetY = 0 } = slot;
+  const iw = el.naturalWidth, ih = el.naturalHeight;
+  const baseScale = CH / ih;
+  const scale = baseScale * zoom;
+  const dw = iw * scale;
+  const dh = ih * scale;
+  // Center as base, then offset as fraction of canvas size
+  const centerX = (CW - dw) / 2;
+  const centerY = (CH - dh) / 2;
+  const dx = centerX + (offsetX / 100) * CW;
+  const dy = centerY + (offsetY / 100) * CH;
+  ctx.drawImage(el, dx, dy, dw, dh);
+}
 
 function renderCanvas() {
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, CW, CH);
   const panels = getPanels(state.layout);
-  // Phase 1 — all panels clipped to their rectangle (skip cutouts)
+
+  // Phase 1 — all panels clipped to their rectangle (skip cutouts in multi-panel)
   panels.forEach((p, i) => {
     const slot = state.slots[i];
     if (slot?.cutout) return;
@@ -558,7 +570,7 @@ function renderCanvas() {
       ctx.textBaseline = 'middle';
       ctx.fillText(String(i + 1), p.x + p.w / 2, p.y + p.h / 2);
     }
-    if (state.activeSlot === i && slot && slot.el) {
+    if (state.activeSlot === i && !state.activeIsOverlay && slot && slot.el) {
       ctx.strokeStyle = 'rgba(193,18,31,0.75)';
       ctx.lineWidth = 5;
       ctx.strokeRect(p.x + 2.5, p.y + 2.5, p.w - 5, p.h - 5);
@@ -566,26 +578,40 @@ function renderCanvas() {
     ctx.restore();
   });
 
-  // Phase 2 — cutout images drawn without clipping; subject bleeds across panel boundaries
-  panels.forEach((p, i) => {
-    const slot = state.slots[i];
-    if (!slot?.cutout || !slot.cutoutEl) return;
-    drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
-    if (state.activeSlot === i) {
-      ctx.strokeStyle = 'rgba(193,18,31,0.75)';
-      ctx.lineWidth = 5;
-      ctx.strokeRect(p.x + 2.5, p.y + 2.5, p.w - 5, p.h - 5);
-    }
-  });
+  // Phase 2 — cutout images in multi-panel mode (bleed across boundaries)
+  if (state.layout !== '1up') {
+    panels.forEach((p, i) => {
+      const slot = state.slots[i];
+      if (!slot?.cutout || !slot.cutoutEl) return;
+      drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
+      if (state.activeSlot === i) {
+        ctx.strokeStyle = 'rgba(193,18,31,0.75)';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(p.x + 2.5, p.y + 2.5, p.w - 5, p.h - 5);
+      }
+    });
+  }
 
   applyDocumentTreatment();
 
-  // Phase 3 — re-draw cutouts that are set to preserve full colour, on top of any treatment
-  panels.forEach((p, i) => {
-    const slot = state.slots[i];
-    if (!slot?.cutout || !slot.cutoutEl || !slot.preserveColor) return;
-    drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
-  });
+  // Phase 3 — re-draw multi-panel cutouts that preserve full colour
+  if (state.layout !== '1up') {
+    panels.forEach((p, i) => {
+      const slot = state.slots[i];
+      if (!slot?.cutout || !slot.cutoutEl || !slot.preserveColor) return;
+      drawSlotImage(ctx, { ...slot, el: slot.cutoutEl }, p);
+    });
+  }
+
+  // Phase 4 — portrait overlay for 1up (always on top, always full colour)
+  if (state.layout === '1up' && state.overlaySlot?.cutoutEl) {
+    drawOverlayImage(state.overlaySlot);
+    if (state.activeIsOverlay) {
+      ctx.strokeStyle = 'rgba(193,18,31,0.75)';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(2.5, 2.5, CW - 5, CH - 5);
+    }
+  }
 }
 
 const WASH_COLORS = { red: '#C1121F', blue: '#0D3B6E', green: '#1A5C3A', yellow: '#D4A000' };
@@ -631,7 +657,6 @@ function applyDocumentTreatment() {
   const color = WASH_COLORS[t];
   if (!color) return;
 
-  // Desaturate + contrast boost for a punchy duotone base
   const id = ctx.getImageData(0, 0, CW, CH);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -641,7 +666,6 @@ function applyDocumentTreatment() {
   }
   ctx.putImageData(id, 0, 0);
 
-  // Each nominal direction has a base angle; +15° gives a natural tilt
   const DIR_ANGLES = { ltr: 0, rtl: 180, ttb: 90, btt: 270, tlbr: 45, trbl: 135, bltr: 315, brtl: 225 };
   const angle = ((DIR_ANGLES[state.fadeDir] ?? 0) + 15) * Math.PI / 180;
   const ca = Math.cos(angle), sa = Math.sin(angle);
@@ -694,16 +718,38 @@ function panelAtPoint(clientX, clientY) {
 }
 
 canvas.addEventListener('mousedown', e => {
+  // Overlay drag takes priority when overlay is active
+  if (state.activeIsOverlay && state.overlaySlot?.cutoutEl) {
+    drag = { isOverlay: true, lastX: e.clientX, lastY: e.clientY };
+    return;
+  }
   const idx = panelAtPoint(e.clientX, e.clientY);
   if (idx === -1) return;
-  if (state.slots[idx] && state.slots[idx].el) {
-    if (state.activeSlot !== idx) setActiveSlot(idx);
+  const slot = state.slots[idx];
+  if (slot && slot.el) {
+    if (state.activeSlot !== idx || state.activeIsOverlay) setActiveSlot(idx);
     drag = { idx, lastX: e.clientX, lastY: e.clientY };
   }
 });
 
 window.addEventListener('mousemove', e => {
   if (!drag) return;
+
+  if (drag.isOverlay) {
+    const slot = state.overlaySlot;
+    if (!slot?.cutoutEl) { drag = null; return; }
+    const scale = CW / canvas.clientWidth;
+    const dx = (e.clientX - drag.lastX) * scale;
+    const dy = (e.clientY - drag.lastY) * scale;
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
+    slot.offsetX = Math.max(-100, Math.min(100, (slot.offsetX || 0) + (dx / CW) * 100));
+    slot.offsetY = Math.max(-100, Math.min(100, (slot.offsetY || 0) + (dy / CH) * 100));
+    syncCropControls();
+    renderCanvas();
+    return;
+  }
+
   const slot = state.slots[drag.idx];
   if (!slot || !slot.el) { drag = null; return; }
   const panels = getPanels(state.layout);
@@ -735,6 +781,15 @@ window.addEventListener('mouseup', () => { drag = null; });
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
+
+  if (state.activeIsOverlay && state.overlaySlot?.cutoutEl) {
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    state.overlaySlot.zoom = Math.max(0.1, Math.min(5, (state.overlaySlot.zoom || 1) + delta));
+    syncCropControls();
+    renderCanvas();
+    return;
+  }
+
   const idx = panelAtPoint(e.clientX, e.clientY);
   if (idx === -1 || !state.slots[idx] || !state.slots[idx].el) return;
   if (state.activeSlot !== idx) setActiveSlot(idx);
@@ -747,6 +802,15 @@ canvas.addEventListener('wheel', e => {
 
 function setActiveSlot(idx) {
   state.activeSlot = idx;
+  state.activeIsOverlay = false;
+  buildSlots();
+  syncCropControls();
+  renderCanvas();
+}
+
+function setActiveOverlay() {
+  state.activeSlot = null;
+  state.activeIsOverlay = true;
   buildSlots();
   syncCropControls();
   renderCanvas();
@@ -755,11 +819,22 @@ function setActiveSlot(idx) {
 // Crop controls
 function syncCropControls() {
   const controls = document.getElementById('cropControls');
-  const idx = state.activeSlot;
-  const slot = (idx !== null) ? state.slots[idx] : null;
-  if (idx === null || !slot || !slot.el) { controls.classList.remove('visible'); return; }
+  let slot = null;
+
+  if (state.activeIsOverlay) {
+    slot = state.overlaySlot;
+    document.getElementById('cropTitle').textContent = 'Portrait overlay — position';
+  } else if (state.activeSlot !== null) {
+    slot = state.slots[state.activeSlot];
+    document.getElementById('cropTitle').textContent = `Panel ${state.activeSlot + 1} — crop & position`;
+  }
+
+  if (!slot || !slot.el) { controls.classList.remove('visible'); return; }
+
+  // For overlay slot, only show controls if bg has been removed
+  if (state.activeIsOverlay && !slot.cutoutEl) { controls.classList.remove('visible'); return; }
+
   controls.classList.add('visible');
-  document.getElementById('cropTitle').textContent = `Panel ${idx + 1} — crop & position`;
   const z = Math.round((slot.zoom || 1) * 100);
   document.getElementById('ctrlZoom').value = z;
   document.getElementById('ctrlZoomVal').textContent = z + '%';
@@ -769,20 +844,26 @@ function syncCropControls() {
   document.getElementById('ctrlYVal').textContent = Math.round(slot.offsetY || 0) + '%';
 }
 
+function getActiveSlotForControls() {
+  if (state.activeIsOverlay) return state.overlaySlot;
+  if (state.activeSlot !== null) return state.slots[state.activeSlot];
+  return null;
+}
+
 document.getElementById('ctrlZoom').addEventListener('input', function() {
-  const s = state.slots[state.activeSlot]; if (!s) return;
+  const s = getActiveSlotForControls(); if (!s) return;
   s.zoom = this.value / 100;
   document.getElementById('ctrlZoomVal').textContent = this.value + '%';
   renderCanvas();
 });
 document.getElementById('ctrlX').addEventListener('input', function() {
-  const s = state.slots[state.activeSlot]; if (!s) return;
+  const s = getActiveSlotForControls(); if (!s) return;
   s.offsetX = parseFloat(this.value);
   document.getElementById('ctrlXVal').textContent = Math.round(this.value) + '%';
   renderCanvas();
 });
 document.getElementById('ctrlY').addEventListener('input', function() {
-  const s = state.slots[state.activeSlot]; if (!s) return;
+  const s = getActiveSlotForControls(); if (!s) return;
   s.offsetY = parseFloat(this.value);
   document.getElementById('ctrlYVal').textContent = Math.round(this.value) + '%';
   renderCanvas();
@@ -790,7 +871,7 @@ document.getElementById('ctrlY').addEventListener('input', function() {
 
 document.getElementById('dpad').querySelectorAll('[data-dx]').forEach(btn => {
   btn.addEventListener('click', () => {
-    const s = state.slots[state.activeSlot]; if (!s) return;
+    const s = getActiveSlotForControls(); if (!s) return;
     s.offsetX = Math.max(-100, Math.min(100, (s.offsetX || 0) + parseFloat(btn.dataset.dx)));
     s.offsetY = Math.max(-100, Math.min(100, (s.offsetY || 0) + parseFloat(btn.dataset.dy)));
     syncCropControls();
@@ -817,7 +898,7 @@ document.getElementById('fadeControls').addEventListener('click', e => {
 });
 
 document.getElementById('ctrlReset').addEventListener('click', () => {
-  const s = state.slots[state.activeSlot]; if (!s) return;
+  const s = getActiveSlotForControls(); if (!s) return;
   s.zoom = 1; s.offsetX = 0; s.offsetY = 0;
   syncCropControls();
   renderCanvas();
@@ -826,6 +907,14 @@ document.getElementById('ctrlReset').addEventListener('click', () => {
 // Template grid
 function buildMiniSVG(layoutId) {
   const W = 50, H = 26, g = 2;
+
+  if (layoutId === '1up') {
+    // Full rect (background) + portrait shape (overlay) on top
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <rect x="0" y="0" width="${W}" height="${H}" rx="1" fill="#111" opacity="0.28"/>
+      <rect x="18" y="2" width="14" height="${H-4}" rx="1" fill="#111" opacity="0.72"/>
+    </svg>`;
+  }
 
   if (layoutId === '2x2') {
     const hw = (W - g) / 2, hh = (H - g) / 2;
@@ -859,7 +948,6 @@ function buildMiniSVG(layoutId) {
     </svg>`;
   }
 
-  // Equal columns
   const n = getLayout(layoutId).count;
   const sw = (W - g * (n - 1)) / n;
   let rects = '';
@@ -880,6 +968,7 @@ function buildTemplateGrid() {
     btn.addEventListener('click', () => {
       state.layout = layout.id;
       if (state.activeSlot !== null && state.activeSlot >= layout.count) state.activeSlot = null;
+      if (layout.id !== '1up') state.activeIsOverlay = false;
       buildTemplateGrid();
       buildSlots();
       syncCropControls();
@@ -897,7 +986,7 @@ function buildSlots() {
   const n = getLayout(state.layout).count;
   for (let i = 0; i < n; i++) {
     const slot = state.slots[i];
-    const isActive = state.activeSlot === i;
+    const isActive = state.activeSlot === i && !state.activeIsOverlay;
     const div = document.createElement('div');
     div.className = 'slot' + (slot ? ' has-image' : '') + (isActive ? ' active-panel' : '');
     div.setAttribute('draggable', 'true');
@@ -912,11 +1001,11 @@ function buildSlots() {
           </div>
         </div>
         <img class="slot-thumb" src="${slot.src}" alt="" draggable="false">
-        ${slot.cutout ? `<div class="cutout-color-row"><button class="cutout-color-btn${slot.preserveColor ? ' active' : ''}" data-action="preservecolor" data-i="${i}">${slot.preserveColor ? '✓ Full colour (ignores treatment)' : '○ Full colour (ignores treatment)'}</button></div>` : ''}
+        ${slot.cutout && state.layout !== '1up' ? `<div class="cutout-color-row"><button class="cutout-color-btn${slot.preserveColor ? ' active' : ''}" data-action="preservecolor" data-i="${i}">${slot.preserveColor ? '✓ Full colour (ignores treatment)' : '○ Full colour (ignores treatment)'}</button></div>` : ''}
         <div class="slot-actions">
           <button class="slot-action-btn" data-action="crop" data-i="${i}">✦ Crop</button>
           <button class="slot-action-btn" data-action="replace" data-i="${i}">↺ Replace</button>
-          <button class="slot-action-btn${slot.cutout ? ' is-active' : ''}" data-action="cutout" data-i="${i}"${slot.cutoutLoading ? ' disabled' : ''}>${slot.cutoutLoading ? '⏳ BG' : slot.cutout ? '✓ BG' : '✂ BG'}</button>
+          ${state.layout !== '1up' ? `<button class="slot-action-btn${slot.cutout ? ' is-active' : ''}" data-action="cutout" data-i="${i}"${slot.cutoutLoading ? ' disabled' : ''}>${slot.cutoutLoading ? '⏳ BG' : slot.cutout ? '✓ BG' : '✂ BG'}</button>` : ''}
           <button class="slot-action-btn danger" data-action="remove" data-i="${i}">✕</button>
         </div>`;
     } else {
@@ -925,14 +1014,14 @@ function buildSlots() {
           <div class="drag-handle" title="Drag to reorder">⠿</div>
           <div class="slot-num">${i+1}</div>
           <div class="slot-info">
-            <div class="slot-filename" style="color:var(--text3)">Empty</div>
+            <div class="slot-filename" style="color:var(--muted)">Empty</div>
             <div class="slot-dims">—</div>
           </div>
         </div>
         <div class="slot-empty-area" data-action="pick" data-i="${i}">Click or drop an image</div>`;
     }
 
-    // Card reorder — dragstart
+    // Card reorder
     div.addEventListener('dragstart', e => {
       if (e.target.closest('.slot-actions, .slot-empty-area')) { e.preventDefault(); return; }
       slotDragSrc = i;
@@ -940,13 +1029,11 @@ function buildSlots() {
       e.dataTransfer.setData('text/x-slot-index', String(i));
       setTimeout(() => div.classList.add('dragging'), 0);
     });
-
     div.addEventListener('dragend', () => {
       slotDragSrc = null;
       div.classList.remove('dragging');
       document.querySelectorAll('.slot').forEach(s => s.classList.remove('drop-target', 'drag-over'));
     });
-
     div.addEventListener('dragover', e => {
       e.preventDefault();
       if (slotDragSrc !== null && slotDragSrc !== i) {
@@ -956,11 +1043,9 @@ function buildSlots() {
         div.classList.add('drag-over');
       }
     });
-
     div.addEventListener('dragleave', e => {
       if (!div.contains(e.relatedTarget)) div.classList.remove('drag-over', 'drop-target');
     });
-
     div.addEventListener('drop', e => {
       e.preventDefault();
       div.classList.remove('drag-over', 'drop-target');
@@ -982,7 +1067,101 @@ function buildSlots() {
     container.appendChild(div);
   }
 
+  // Overlay slot — only for 1up layout
+  if (state.layout === '1up') {
+    const divider = document.createElement('div');
+    divider.className = 'overlay-divider';
+    divider.innerHTML = `<div class="overlay-divider-line"></div><span class="overlay-divider-label">Portrait overlay</span><div class="overlay-divider-line"></div>`;
+    container.appendChild(divider);
+
+    const ov = state.overlaySlot;
+    const isOverlayActive = state.activeIsOverlay;
+    const overlayDiv = document.createElement('div');
+    overlayDiv.className = 'slot overlay-slot' + (ov ? ' has-image' : '') + (isOverlayActive ? ' active-panel' : '');
+
+    if (ov) {
+      overlayDiv.innerHTML = `
+        <div class="slot-header" id="overlayHeader">
+          <div class="slot-num" style="font-size:14px;">✦</div>
+          <div class="slot-info">
+            <div class="slot-filename">${ov.name}</div>
+            <div class="slot-dims">${ov.width}×${ov.height}${ov.cutout ? ' · BG removed' : ''}</div>
+          </div>
+        </div>
+        <img class="slot-thumb" src="${ov.src}" alt="" draggable="false" style="object-position:top;">
+        <button class="overlay-bg-btn${ov.cutout ? ' is-active' : ''}" id="overlayBgBtn"${ov.cutoutLoading ? ' disabled' : ''}>
+          ${ov.cutoutLoading ? '⏳ Removing background…' : ov.cutout ? '✓ Background removed' : '✂ Remove background'}
+        </button>
+        <div class="slot-actions">
+          <button class="slot-action-btn" data-action="overlay-position">✦ Position</button>
+          <button class="slot-action-btn" data-action="overlay-replace">↺ Replace</button>
+          <button class="slot-action-btn danger" data-action="overlay-remove">✕</button>
+        </div>`;
+    } else {
+      overlayDiv.innerHTML = `
+        <div class="slot-header">
+          <div class="slot-num" style="font-size:14px;color:var(--muted);">✦</div>
+          <div class="slot-info">
+            <div class="slot-filename" style="color:var(--muted)">No portrait loaded</div>
+            <div class="slot-dims">—</div>
+          </div>
+        </div>
+        <div class="slot-empty-area" data-action="overlay-pick">Click or drop a portrait image</div>`;
+    }
+
+    // Overlay drag-drop for file
+    overlayDiv.addEventListener('dragover', e => {
+      if (slotDragSrc !== null) return;
+      e.preventDefault();
+      overlayDiv.classList.add('drag-over');
+    });
+    overlayDiv.addEventListener('dragleave', e => {
+      if (!overlayDiv.contains(e.relatedTarget)) overlayDiv.classList.remove('drag-over');
+    });
+    overlayDiv.addEventListener('drop', e => {
+      e.preventDefault();
+      overlayDiv.classList.remove('drag-over');
+      if (slotDragSrc !== null) return;
+      if (e.dataTransfer.files.length) loadFileIntoOverlay(e.dataTransfer.files[0]);
+    });
+
+    container.appendChild(overlayDiv);
+
+    // Overlay action handlers
+    overlayDiv.querySelectorAll('[data-action]').forEach(el => {
+      el.addEventListener('click', () => {
+        const action = el.dataset.action;
+        if (action === 'overlay-pick' || action === 'overlay-replace') {
+          state.pendingOverlay = true;
+          document.getElementById('overlayFileInput').click();
+        } else if (action === 'overlay-remove') {
+          state.overlaySlot = null;
+          state.activeIsOverlay = false;
+          buildSlots(); syncCropControls(); renderCanvas(); updateUI();
+        } else if (action === 'overlay-position') {
+          setActiveOverlay();
+        }
+      });
+    });
+
+    // BG remove button
+    const bgBtn = overlayDiv.querySelector('#overlayBgBtn');
+    if (bgBtn) {
+      bgBtn.addEventListener('click', () => applyBgRemovalOverlay());
+    }
+
+    // Click overlay header to activate position controls
+    const ovHeader = overlayDiv.querySelector('#overlayHeader');
+    if (ovHeader) {
+      ovHeader.addEventListener('click', () => {
+        if (state.overlaySlot?.cutoutEl) setActiveOverlay();
+      });
+    }
+  }
+
+  // Action handlers for main slots
   container.querySelectorAll('[data-action]').forEach(el => {
+    if (el.dataset.action && el.dataset.action.startsWith('overlay-')) return; // handled above
     el.addEventListener('click', () => {
       const action = el.dataset.action, idx = parseInt(el.dataset.i);
       if (action === 'remove') {
@@ -1018,7 +1197,7 @@ function loadFileIntoSlot(file, idx) {
     const el = new Image();
     el.onload = () => {
       state.slots[idx] = { src: e.target.result, name: file.name, width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0, cutout: false, cutoutEl: null, cutoutLoading: false, preserveColor: false };
-      if (state.activeSlot === null) state.activeSlot = idx;
+      if (state.activeSlot === null && !state.activeIsOverlay) state.activeSlot = idx;
       buildSlots(); syncCropControls(); renderCanvas(); updateUI();
       showToast(`Panel ${idx+1} loaded`, 'success');
     };
@@ -1027,6 +1206,20 @@ function loadFileIntoSlot(file, idx) {
   reader.readAsDataURL(file);
 }
 
+function loadFileIntoOverlay(file) {
+  if (!file.type.startsWith('image/')) { showToast('Not an image file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const el = new Image();
+    el.onload = () => {
+      state.overlaySlot = { src: e.target.result, name: file.name, width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0, cutout: false, cutoutEl: null, cutoutLoading: false };
+      buildSlots(); renderCanvas(); updateUI();
+      showToast('Portrait loaded — click Remove Background to cut out the subject', 'success');
+    };
+    el.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 document.getElementById('fileInput').addEventListener('change', e => {
   const files = Array.from(e.target.files);
@@ -1044,10 +1237,18 @@ document.getElementById('fileInput').addEventListener('change', e => {
   e.target.value = '';
 });
 
+document.getElementById('overlayFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) loadFileIntoOverlay(file);
+  e.target.value = '';
+  state.pendingOverlay = false;
+});
+
 document.body.addEventListener('dragover', e => e.preventDefault());
 document.body.addEventListener('drop', e => {
   e.preventDefault();
   if (e.dataTransfer.getData('text/x-slot-index') !== '') return;
+  // Only auto-fill main slots on body drop (not overlay)
   const n = getLayout(state.layout).count;
   Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).forEach(f => {
     const next = Array.from({length: n}, (_, i) => i).find(i => !state.slots[i]);
@@ -1059,7 +1260,6 @@ document.getElementById('filenameInput').addEventListener('input', function() {
   this.dataset.userEdited = '1';
   updateUI();
 });
-
 
 document.getElementById('qualitySlider').addEventListener('input', function() {
   state.quality = this.value / 100;
@@ -1082,28 +1282,22 @@ const BG_MODEL_CACHED_KEY = 'bd_bgmodel_1.7.0_q8';
 async function applyBgRemoval(idx) {
   const slot = state.slots[idx];
   if (!slot) return;
-
-  // Toggle off if already active
   if (slot.cutout) {
     slot.cutout = false;
     buildSlots(); renderCanvas();
     return;
   }
-
   slot.cutoutLoading = true;
   buildSlots();
   const isFirstUse = !localStorage.getItem(BG_MODEL_CACHED_KEY);
   showToast(isFirstUse ? 'Removing background — downloading model (~10 MB, once only)…' : 'Removing background…');
-
   try {
     const removeBackground = await loadBgRemover();
-
     const offscreen = document.createElement('canvas');
     offscreen.width = slot.el.naturalWidth;
     offscreen.height = slot.el.naturalHeight;
     offscreen.getContext('2d').drawImage(slot.el, 0, 0);
     const inputBlob = await new Promise(res => offscreen.toBlob(res, 'image/png'));
-
     const resultBlob = await removeBackground(inputBlob, { model: 'isnet_quint8' });
     localStorage.setItem(BG_MODEL_CACHED_KEY, '1');
     const url = URL.createObjectURL(resultBlob);
@@ -1113,7 +1307,48 @@ async function applyBgRemoval(idx) {
       slot.cutout = true;
       slot.cutoutLoading = false;
       buildSlots(); syncCropControls(); renderCanvas();
-      showToast('Background removed — subject will bleed across panels', 'success');
+      showToast('Background removed', 'success');
+    };
+    cutoutEl.src = url;
+  } catch (err) {
+    slot.cutoutLoading = false;
+    buildSlots();
+    showToast('Background removal failed', 'error');
+    console.error(err);
+  }
+}
+
+async function applyBgRemovalOverlay() {
+  const slot = state.overlaySlot;
+  if (!slot) return;
+  if (slot.cutout) {
+    slot.cutout = false;
+    slot.cutoutEl = null;
+    state.activeIsOverlay = false;
+    buildSlots(); syncCropControls(); renderCanvas();
+    return;
+  }
+  slot.cutoutLoading = true;
+  buildSlots();
+  const isFirstUse = !localStorage.getItem(BG_MODEL_CACHED_KEY);
+  showToast(isFirstUse ? 'Removing background — downloading model (~10 MB, once only)…' : 'Removing background…');
+  try {
+    const removeBackground = await loadBgRemover();
+    const offscreen = document.createElement('canvas');
+    offscreen.width = slot.el.naturalWidth;
+    offscreen.height = slot.el.naturalHeight;
+    offscreen.getContext('2d').drawImage(slot.el, 0, 0);
+    const inputBlob = await new Promise(res => offscreen.toBlob(res, 'image/png'));
+    const resultBlob = await removeBackground(inputBlob, { model: 'isnet_quint8' });
+    localStorage.setItem(BG_MODEL_CACHED_KEY, '1');
+    const url = URL.createObjectURL(resultBlob);
+    const cutoutEl = new Image();
+    cutoutEl.onload = () => {
+      slot.cutoutEl = cutoutEl;
+      slot.cutout = true;
+      slot.cutoutLoading = false;
+      buildSlots(); syncCropControls(); renderCanvas();
+      showToast('Background removed — drag the portrait to reposition', 'success');
     };
     cutoutEl.src = url;
   } catch (err) {
@@ -1126,12 +1361,14 @@ async function applyBgRemoval(idx) {
 
 document.getElementById('exportBtn').addEventListener('click', () => {
   const prev = state.activeSlot;
+  const prevOverlay = state.activeIsOverlay;
   state.activeSlot = null;
+  state.activeIsOverlay = false;
   renderCanvas();
   try {
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/jpeg', state.quality);
-    const fname = (document.getElementById('filenameInput').value.trim() || `businessdesk_image${state.fileId}`).replace(/\.jpg$/i,'');
+    const fname = (document.getElementById('filenameInput').value.trim() || `businessdesk_portrait_${state.fileId}`).replace(/\.jpg$/i,'');
     a.download = fname + '.jpg';
     a.click();
     showToast('JPG downloaded', 'success');
@@ -1139,12 +1376,21 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     showToast('Export blocked — CORS on image source', 'error');
   }
   state.activeSlot = prev;
+  state.activeIsOverlay = prevOverlay;
   renderCanvas();
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
-  state.slots = []; state.layout = '2v'; state.activeSlot = null; state.pendingSlot = null;
-  state.treatment = 'none'; state.fadeDir = 'ltr'; state.fileId = randomId();
+  state.slots = [];
+  state.overlaySlot = null;
+  state.layout = '1up';
+  state.activeSlot = null;
+  state.activeIsOverlay = false;
+  state.pendingSlot = null;
+  state.pendingOverlay = false;
+  state.treatment = 'none';
+  state.fadeDir = 'ltr';
+  state.fileId = randomId();
   delete document.getElementById('filenameInput').dataset.userEdited;
   document.querySelectorAll('#treatRow .treat-btn').forEach(b => b.classList.toggle('active', b.dataset.t === 'none'));
   document.getElementById('fadeControls').style.display = 'none';
@@ -1157,12 +1403,21 @@ function updateUI() {
   const n = layout.count;
   const filled = state.slots.filter(Boolean).length;
   document.getElementById('slotCount').textContent = `${filled}/${n}`;
-  document.getElementById('exportBtn').disabled = filled < 2;
+
+  // 1up: allow export with just the background; multi-panel: require ≥2
+  if (state.layout === '1up') {
+    document.getElementById('exportBtn').disabled = !state.slots[0];
+  } else {
+    document.getElementById('exportBtn').disabled = filled < 2;
+  }
+
   const fnInput = document.getElementById('filenameInput');
-  if (!fnInput.dataset.userEdited) fnInput.value = `businessdesk_image${state.fileId}`;
-  const fname = (fnInput.value.trim() || `businessdesk_image${state.fileId}`).replace(/\.jpg$/i,'');
+  if (!fnInput.dataset.userEdited) fnInput.value = `businessdesk_portrait_${state.fileId}`;
+  const fname = (fnInput.value.trim() || `businessdesk_portrait_${state.fileId}`).replace(/\.jpg$/i,'');
   document.getElementById('exportMeta').innerHTML = `<span>${fname}.jpg</span> · 1920×1080 · ${document.getElementById('qualitySlider').value}% quality`;
-  document.getElementById('previewLabel').textContent = `${layout.label} template · ${filled} of ${n} filled`;
+
+  const overlayNote = (state.layout === '1up' && state.overlaySlot?.cutout) ? ' · portrait overlay' : '';
+  document.getElementById('previewLabel').textContent = `${layout.label} template · ${filled} of ${n} filled${overlayNote}`;
 }
 
 let toastTimer;
@@ -1179,7 +1434,6 @@ renderCanvas();
 applyPreviewZoom();
 updateUI();
 
-// Guide modal
 (function() {
   const btn   = document.getElementById('guideBtn');
   const modal = document.getElementById('guideModal');
@@ -1190,7 +1444,6 @@ updateUI();
   document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
 })();
 </script>
-
 
 </body>
 </html>

@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s \"https://api.github.com/repos/xenova/transformers.js/contents/examples/remove-background-client/src/worker.js\")",
+      "Bash(curl -s -L \"https://raw.githubusercontent.com/xenova/transformers.js/main/examples/remove-background-client/src/worker.js\")",
+      "Bash(curl -s \"https://api.github.com/repos/xenova/transformers.js/git/trees/main?recursive=1\")",
+      "Bash(curl -s \"https://api.github.com/repos/xenova/transformers.js/contents/examples\")",
+      "WebSearch",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:blog.logrocket.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(curl -s https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/browser/background-removal.js)",
+      "Bash(curl -s https://registry.npmjs.org/@imgly/background-removal/1.7.0)",
+      "Bash(curl -s https://registry.npmjs.org/@imgly/background-removal/-/background-removal-1.7.0.tgz)",
+      "Bash(tar -tzf -)",
+      "Bash(grep -E \"index\\\\.\\(mjs|cjs\\)$\")",
+      "Bash(tar -xzOf - package/dist/index.mjs)",
+      "Bash(grep \"src.*\\\\.ts$\")",
+      "Bash(tar -xzOf - package/dist/src/index.d.ts)",
+      "Bash(tar -xzOf - package/dist/src/api/v1.d.ts)",
+      "Bash(tar -xzOf - package/dist/src/schema.d.ts)",
+      "Bash(tar -xzOf - package/dist/src/resource.d.ts)",
+      "Bash(tar -xzOf - package/dist/src/url.d.ts)",
+      "Bash(tar -xzOf - package/dist/src/inference.d.ts)",
+      "Bash(tar -xzOf - package/package.json)"
+    ]
+  }
+}

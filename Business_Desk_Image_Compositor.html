@@ -172,6 +172,11 @@
   .duo-preset:hover { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--muted); }
   .duo-preset.active { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ink); }
 
+  .split-controls { margin-top: 10px; display: none; flex-direction: column; gap: 8px; }
+  .split-controls.visible { display: flex; }
+  .split-chips { display: flex; gap: 4px; }
+  .split-chip { flex: 1; height: 30px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: var(--mono); font-weight: 800; color: rgba(255,255,255,0.92); letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.55); }
+
   .hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; line-height: 1.5; }
 
   .url-row { display: flex; gap: 6px; margin-top: 12px; }
@@ -274,13 +279,10 @@
       <div class="section-head"><span class="step">2</span> Treatment</div>
       <div class="treat-row" id="treatRow">
         <button class="treat-btn active" data-t="none">None</button>
-        <button class="treat-btn" data-t="bw">B&amp;W</button>
-        <button class="treat-btn" data-t="bwhc">B&amp;W+</button>
         <button class="treat-btn" data-t="duo">Duo</button>
-        <button class="treat-btn treat-swatch" data-t="red"    style="background:#C1121F" title="BusinessDesk red"></button>
-        <button class="treat-btn treat-swatch" data-t="blue"   style="background:#0D3B6E" title="Blue"></button>
-        <button class="treat-btn treat-swatch" data-t="green"  style="background:#1A5C3A" title="Green"></button>
-        <button class="treat-btn treat-swatch" data-t="yellow" style="background:#D4A000" title="Yellow"></button>
+        <button class="treat-btn" data-t="split">Split</button>
+        <button class="treat-btn treat-swatch" data-t="red"  style="background:#C1121F" title="BusinessDesk red"></button>
+        <button class="treat-btn treat-swatch" data-t="blue" style="background:#0D3B6E" title="Blue"></button>
       </div>
       <div class="duo-controls" id="duoControls">
         <div class="duo-row">
@@ -290,6 +292,10 @@
           <input type="color" class="duo-color" id="duoHighlight" value="#F5F0E8">
         </div>
         <div class="duo-presets" id="duoPresets"></div>
+      </div>
+      <div class="split-controls" id="splitControls">
+        <div class="split-chips" id="splitChips"></div>
+        <div class="duo-presets" id="splitPresets"></div>
       </div>
       <div class="fade-controls" id="fadeControls" style="display:none">
         <span class="fade-label">Fade</span>
@@ -539,6 +545,7 @@ let state = {
   fadeDir: 'ltr',
   duoShadow: '#C1121F',
   duoHighlight: '#F5F0E8',
+  splitPaletteIdx: 0,
   fileId: randomId(),
 };
 
@@ -691,6 +698,32 @@ function applyDocumentTreatment() {
       d[i+1] = Math.round(sg + tt * (hg - sg));
       d[i+2] = Math.round(sb + tt * (hb - sb));
     }
+    ctx.putImageData(id, 0, 0);
+    return;
+  }
+
+  if (t === 'split') {
+    const panels = getPanels(state.layout);
+    const palette = SPLIT_PALETTES[state.splitPaletteIdx].stops;
+    const id = ctx.getImageData(0, 0, CW, CH);
+    const d = id.data;
+    panels.forEach((p, i) => {
+      const { shadow, highlight } = palette[i % palette.length];
+      const [sr, sg, sb] = hexToRgb(shadow);
+      const [hr, hg, hb] = hexToRgb(highlight);
+      const x0 = p.x, y0 = p.y, x1 = p.x + p.w, y1 = p.y + p.h;
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const px = (y * CW + x) * 4;
+          let lum = d[px] * 0.299 + d[px+1] * 0.587 + d[px+2] * 0.114;
+          lum = Math.min(255, Math.max(0, 1.55 * (lum - 128) + 138));
+          const tt = lum / 255;
+          d[px]   = Math.round(sr + tt * (hr - sr));
+          d[px+1] = Math.round(sg + tt * (hg - sg));
+          d[px+2] = Math.round(sb + tt * (hb - sb));
+        }
+      }
+    });
     ctx.putImageData(id, 0, 0);
     return;
   }
@@ -928,6 +961,8 @@ document.getElementById('treatRow').addEventListener('click', e => {
   const showFade = !!WASH_COLORS[state.treatment];
   document.getElementById('fadeControls').style.display = showFade ? 'flex' : 'none';
   document.getElementById('duoControls').classList.toggle('visible', state.treatment === 'duo');
+  document.getElementById('splitControls').classList.toggle('visible', state.treatment === 'split');
+  if (state.treatment === 'split') buildSplitControls();
   renderCanvas();
 });
 
@@ -949,6 +984,34 @@ const DUO_PRESETS = [
   { shadow: '#5C1A00', highlight: '#F0C040', name: 'Ember'   },
 ];
 
+// Per-panel split duotone palettes — red leads, then complements of brand red #C1121F
+const SPLIT_PALETTES = [
+  { name: 'Complement',
+    stops: [
+      { shadow: '#6B0B12', highlight: '#F5DDD8' },  // Red (brand)
+      { shadow: '#063835', highlight: '#D8F3F0' },  // Teal
+      { shadow: '#0C3A06', highlight: '#DFF0D0' },  // Sage
+      { shadow: '#06153A', highlight: '#D0DDEE' },  // Navy
+      { shadow: '#200630', highlight: '#E5D8F0' },  // Purple
+    ]},
+  { name: 'Warm',
+    stops: [
+      { shadow: '#6B0B12', highlight: '#F5DDD8' },  // Red (brand)
+      { shadow: '#4A2A00', highlight: '#F0D898' },  // Amber
+      { shadow: '#2A3800', highlight: '#DDE898' },  // Moss
+      { shadow: '#003028', highlight: '#98E8D8' },  // Teal
+      { shadow: '#4A0020', highlight: '#E898C0' },  // Rose
+    ]},
+  { name: 'Mono',
+    stops: [
+      { shadow: '#0D0D0D', highlight: '#C1121F' },  // Noir red
+      { shadow: '#0D0D0D', highlight: '#12B0AC' },  // Noir teal
+      { shadow: '#0D0D0D', highlight: '#B0A812' },  // Noir gold
+      { shadow: '#0D0D0D', highlight: '#1248B0' },  // Noir navy
+      { shadow: '#0D0D0D', highlight: '#B01270' },  // Noir rose
+    ]},
+];
+
 function buildDuoPresets() {
   const container = document.getElementById('duoPresets');
   DUO_PRESETS.forEach(p => {
@@ -965,6 +1028,39 @@ function buildDuoPresets() {
       renderCanvas();
     });
     container.appendChild(btn);
+  });
+}
+
+function buildSplitControls() {
+  const palette = SPLIT_PALETTES[state.splitPaletteIdx];
+  const n = getLayout(state.layout).count;
+
+  const chipsEl = document.getElementById('splitChips');
+  chipsEl.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const { shadow, highlight } = palette.stops[i % palette.stops.length];
+    const chip = document.createElement('div');
+    chip.className = 'split-chip';
+    chip.style.background = `linear-gradient(150deg, ${highlight} 0%, ${shadow} 100%)`;
+    chip.textContent = i + 1;
+    chipsEl.appendChild(chip);
+  }
+
+  const presetsEl = document.getElementById('splitPresets');
+  presetsEl.innerHTML = '';
+  SPLIT_PALETTES.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'duo-preset' + (i === state.splitPaletteIdx ? ' active' : '');
+    btn.title = p.name;
+    const colors = p.stops.map(s => s.highlight).join(', ');
+    btn.style.background = `linear-gradient(to right, ${colors})`;
+    btn.addEventListener('click', () => {
+      state.splitPaletteIdx = i;
+      document.querySelectorAll('#splitPresets .duo-preset').forEach(b => b.classList.toggle('active', b === btn));
+      buildSplitControls();
+      renderCanvas();
+    });
+    presetsEl.appendChild(btn);
   });
 }
 
@@ -1055,6 +1151,7 @@ function buildTemplateGrid() {
       buildSlots();
       syncCropControls();
       updateUI();
+      if (state.treatment === 'split') buildSplitControls();
       renderCanvas();
     });
     grid.appendChild(btn);
@@ -1477,6 +1574,8 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   document.querySelectorAll('#treatRow .treat-btn').forEach(b => b.classList.toggle('active', b.dataset.t === 'none'));
   document.getElementById('fadeControls').style.display = 'none';
   document.getElementById('duoControls').classList.remove('visible');
+  document.getElementById('splitControls').classList.remove('visible');
+  state.splitPaletteIdx = 0;
   document.querySelectorAll('.dir-btn').forEach(b => b.classList.toggle('active', b.dataset.d === 'ltr'));
   state.duoShadow = '#C1121F'; state.duoHighlight = '#F5F0E8';
   document.getElementById('duoShadow').value = '#C1121F';

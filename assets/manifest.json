@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "working-well-copy",
+      "file": "working-well-copy.jpg",
+      "name": "WORKING-WELL copy",
+      "role": "behind",
+      "fit": "fill",
+      "anchor": "tl",
+      "width": 100,
+      "zoom": 100,
+      "x": 0,
+      "y": 0,
+      "opacity": 100
+    },
+    {
+      "id": "stocktrade",
+      "file": "stocktrade.jpg",
+      "name": "STOCK&TRADE",
+      "role": "top",
+      "fit": "free",
+      "anchor": "tc",
+      "width": 100,
+      "zoom": 100,
+      "x": 0,
+      "y": 0,
+      "opacity": 100
+    }
+  ]
+}

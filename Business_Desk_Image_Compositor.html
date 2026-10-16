@@ -179,6 +179,34 @@
 
   .hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; line-height: 1.5; }
 
+  /* Library & layers */
+  .checker { background-color: #2a2a2a; background-image: linear-gradient(45deg,#3a3a3a 25%,transparent 25%,transparent 75%,#3a3a3a 75%), linear-gradient(45deg,#3a3a3a 25%,transparent 25%,transparent 75%,#3a3a3a 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px; }
+  .lib-status { margin-left: auto; white-space: nowrap; font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .lib-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .lib-tile { position: relative; border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--field); cursor: pointer; padding: 0; overflow: hidden; display: flex; flex-direction: column; text-align: left; font: inherit; transition: border-color 0.15s; }
+  .lib-tile:hover { border-color: var(--red); }
+  .lib-tile-img { width: 100%; height: 44px; object-fit: contain; display: block; }
+  .lib-tile-name { font-size: 10.5px; font-weight: 500; color: var(--ink); padding: 3px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--rule); }
+  .lib-badge { position: absolute; top: 3px; left: 3px; font-size: 8.5px; font-family: var(--mono); font-weight: 700; letter-spacing: 0.06em; background: var(--ink); color: var(--paper); padding: 1px 4px; text-transform: uppercase; }
+  .lib-badge.behind { background: var(--paper); color: var(--ink); }
+  .lib-empty { grid-column: 1/-1; font-size: 11.5px; color: var(--muted-soft); text-align: center; padding: 10px 6px; border: 1.5px dashed var(--rule-strong); border-radius: var(--radius); line-height: 1.5; }
+  .lib-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .lib-actions .ctrl-reset { margin-top: 0; }
+  body:not(.edit-mode) .edit-only { display: none !important; }
+  .layer-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .layer-row { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--paper); padding: 5px 6px 5px 5px; cursor: pointer; transition: border-color 0.15s; }
+  .layer-row.active { border-color: var(--red); }
+  .layer-thumb { width: 44px; height: 28px; object-fit: contain; flex-shrink: 0; }
+  .layer-del { background: none; border: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; padding: 4px 6px; }
+  .layer-del:hover { color: var(--red); }
+  .layer-controls .ctrl-label { width: 48px; }
+  .seg { display: flex; gap: 4px; flex: 1; }
+  .seg .treat-btn { text-transform: none; font-family: var(--font); font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
+  .anchor-grid { display: grid; grid-template-columns: repeat(3,20px); gap: 3px; }
+  .anchor-btn { width: 20px; height: 20px; border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--paper); cursor: pointer; padding: 0; }
+  .anchor-btn:hover { border-color: var(--ink); }
+  .anchor-btn.active { background: var(--red); border-color: var(--red); }
+
   .url-row { display: flex; gap: 6px; margin-top: 12px; }
   .url-input { flex: 1; background: var(--field); border: 1.5px solid var(--rule-strong); border-radius: var(--radius); color: var(--ink); font: inherit; font-size: 12px; font-family: var(--mono); padding: 8px 10px; outline: none; transition: border-color 0.15s, background 0.15s; }
   .url-input::placeholder { color: var(--muted-soft); }
@@ -227,7 +255,7 @@
   .toast.success { background: var(--success); }
   .toast.error { background: var(--red); }
 
-  #fileInput, #overlayFileInput { display: none; }
+  #fileInput, #overlayFileInput, #layerFileInput { display: none; }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(17,17,17,0.78); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .modal-overlay.open { opacity: 1; pointer-events: auto; }
@@ -355,8 +383,76 @@
 
     </div>
 
+    <div class="section" id="layersSection">
+      <div class="section-head"><span class="step">4</span> Logos &amp; backgrounds <span class="lib-status" id="libStatus"></span></div>
+      <div class="lib-grid" id="libGrid"></div>
+      <div class="lib-actions">
+        <button class="ctrl-reset" id="libAddBtn">+ Add image</button>
+        <button class="ctrl-reset edit-only" id="libConnectBtn">Connect folder</button>
+      </div>
+      <div class="layer-list" id="layerList"></div>
+
+      <div class="crop-controls layer-controls" id="layerControls">
+        <div class="crop-controls-title" id="layerTitle">Layer</div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Place</span>
+          <div class="seg" id="layerRole">
+            <button class="treat-btn" data-v="behind" title="Drawn behind the images — shows through cut-outs">Behind</button>
+            <button class="treat-btn" data-v="top" title="Drawn above everything, never affected by treatment">On top</button>
+          </div>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Fit</span>
+          <div class="seg" id="layerFit">
+            <button class="treat-btn" data-v="fill" title="Cover the whole 1920×1080 frame">Fill frame</button>
+            <button class="treat-btn" data-v="free" title="Size and anchor freely — for logos">Free</button>
+          </div>
+        </div>
+        <div class="ctrl-row" id="layerAnchorRow">
+          <span class="ctrl-label">Anchor</span>
+          <div class="anchor-grid" id="layerAnchor">
+            <button class="anchor-btn" data-v="tl" title="Top left"></button>
+            <button class="anchor-btn" data-v="tc" title="Top centre"></button>
+            <button class="anchor-btn" data-v="tr" title="Top right"></button>
+            <button class="anchor-btn" data-v="ml" title="Middle left"></button>
+            <button class="anchor-btn" data-v="c"  title="Centre"></button>
+            <button class="anchor-btn" data-v="mr" title="Middle right"></button>
+            <button class="anchor-btn" data-v="bl" title="Bottom left"></button>
+            <button class="anchor-btn" data-v="bc" title="Bottom centre"></button>
+            <button class="anchor-btn" data-v="br" title="Bottom right"></button>
+          </div>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label" id="layerSizeLabel">Width</span>
+          <input type="range" class="ctrl-slider" id="layerSize">
+          <span class="ctrl-val" id="layerSizeVal"></span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">X</span>
+          <input type="range" class="ctrl-slider" id="layerX">
+          <span class="ctrl-val" id="layerXVal"></span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Y</span>
+          <input type="range" class="ctrl-slider" id="layerY">
+          <span class="ctrl-val" id="layerYVal"></span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Opacity</span>
+          <input type="range" class="ctrl-slider" id="layerOpacity" min="0" max="100" step="1">
+          <span class="ctrl-val" id="layerOpacityVal"></span>
+        </div>
+        <button class="ctrl-reset" id="layerReset">Reset position</button>
+        <input class="url-input edit-only" id="layerName" type="text" placeholder="Library name, e.g. Stock & Trade banner" style="font-family:var(--font);font-size:12px;padding:6px 8px;">
+        <div class="lib-actions edit-only">
+          <button class="ctrl-reset" id="layerSave">Save to library</button>
+          <button class="ctrl-reset" id="layerDelete" title="Delete from the shared library">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <div class="export-section">
-      <div class="section-head" style="margin-bottom:10px;"><span class="step">4</span> Export</div>
+      <div class="section-head" style="margin-bottom:10px;"><span class="step">5</span> Export</div>
       <div class="quality-row">
         <span class="quality-label">JPG quality</span>
         <input type="range" id="qualitySlider" min="60" max="100" step="1" value="90">
@@ -391,6 +487,7 @@
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept="image/*" multiple>
 <input type="file" id="overlayFileInput" accept="image/*">
+<input type="file" id="layerFileInput" accept="image/*">
 
 <div class="modal-overlay" id="guideModal">
   <div class="modal">
@@ -410,6 +507,7 @@
               <li class="guide-p"><strong>Add a portrait overlay</strong> (1up only) — load a photo into the Portrait overlay slot, then click Remove BG to cut out the subject. The portrait floats over the background.</li>
               <li class="guide-p"><strong>Adjust position</strong> — click either slot to activate crop controls. Drag on the preview or use sliders to reposition.</li>
               <li class="guide-p"><strong>Apply treatment</strong> — choose a colour wash or B&amp;W grade. The portrait overlay is always redrawn in full colour on top.</li>
+              <li class="guide-p"><strong>Add logos &amp; backgrounds</strong> — pick from the shared library or add a new image, then choose whether it sits behind or on top.</li>
               <li class="guide-p"><strong>Export</strong> — set quality and click Download JPG.</li>
             </ol>
           </div>
@@ -457,6 +555,20 @@
             <div class="guide-h">Multi-panel Layouts</div>
             <div class="guide-p">The 2up–5up layouts divide the canvas into equal vertical strips. 2×2 creates four squares. 1+2 and 2+1 are hero layouts with one large panel and two stacked panels.</div>
             <div class="guide-p">In multi-panel mode the portrait overlay is not available — use the ✂ BG button on any individual slot to cut out a subject and let it bleed across panel boundaries instead.</div>
+          </div>
+
+          <div class="guide-divider"></div>
+
+          <div class="guide-section">
+            <div class="guide-h">Logos &amp; Backgrounds</div>
+            <div class="guide-p">Click a library tile to add it, or <strong>+ Add image</strong> for a new one. Each layer has its own settings:</div>
+            <ul class="guide-ul">
+              <li><strong>On top</strong> — drawn above everything and never affected by treatment. Use for logos and title banners.</li>
+              <li><strong>Behind</strong> — drawn under the images, showing through cut-outs. Leave the 1up background slot empty and add a cut-out portrait to sit a person on a branded backdrop. Treatment applies to it.</li>
+              <li><strong>Fill frame</strong> covers the whole 1920×1080; <strong>Free</strong> lets you set width, anchor corner and offset.</li>
+            </ul>
+            <div class="guide-p edit-only"><strong>Save to library</strong> writes the image and its settings into the repo's <code>assets/</code> folder (Chrome/Edge — click Connect folder once and choose <code>assets/</code>). Commit and push to share with the team.</div>
+            <div class="guide-tip">Tip: for banners like Stock &amp; Trade, export the artwork as a transparent PNG the full width of the frame, then use On top · Free · top-centre anchor · 100% width.</div>
           </div>
         </div>
 
@@ -546,6 +658,8 @@ let state = {
   duoShadow: '#C1121F',
   duoHighlight: '#F5F0E8',
   splitPaletteIdx: 0,
+  layers: [],
+  activeLayer: null,
   fileId: randomId(),
 };
 
@@ -570,10 +684,48 @@ function drawOverlayImage(slot) {
   ctx.drawImage(el, dx, dy, dw, dh);
 }
 
+// Library layers — logos and backgrounds drawn behind or on top of the composite
+const ANCHORS = { tl:[0,0], tc:[0.5,0], tr:[1,0], ml:[0,0.5], c:[0.5,0.5], mr:[1,0.5], bl:[0,1], bc:[0.5,1], br:[1,1] };
+
+function layerRect(l) {
+  const iw = l.el.naturalWidth, ih = l.el.naturalHeight;
+  if (l.fit === 'fill') {
+    const s = Math.max(CW / iw, CH / ih) * l.zoom / 100;
+    const dw = iw * s, dh = ih * s;
+    const maxOffX = Math.max(0, (dw - CW) / 2), maxOffY = Math.max(0, (dh - CH) / 2);
+    return { x: (CW - dw) / 2 + (l.x / 100) * maxOffX, y: (CH - dh) / 2 + (l.y / 100) * maxOffY, w: dw, h: dh };
+  }
+  const dw = CW * l.width / 100, dh = dw * ih / iw;
+  const [ax, ay] = ANCHORS[l.anchor] || ANCHORS.c;
+  return { x: ax * (CW - dw) + l.x, y: ay * (CH - dh) + l.y, w: dw, h: dh };
+}
+
+function drawLayers(role) {
+  state.layers.forEach(l => {
+    if (l.role !== role) return;
+    const r = layerRect(l);
+    ctx.save();
+    ctx.globalAlpha = l.opacity / 100;
+    ctx.drawImage(l.el, r.x, r.y, r.w, r.h);
+    ctx.restore();
+  });
+}
+
 function renderCanvas() {
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, CW, CH);
   const panels = getPanels(state.layout);
+  const hasBehind = state.layers.some(l => l.role === 'behind');
+
+  // Phase 0 — background layers, clipped to the panels so the gutters stay black
+  if (hasBehind) {
+    ctx.save();
+    ctx.beginPath();
+    panels.forEach(p => ctx.rect(p.x, p.y, p.w, p.h));
+    ctx.clip();
+    drawLayers('behind');
+    ctx.restore();
+  }
 
   // Phase 1 — all panels clipped to their rectangle (skip cutouts in multi-panel)
   panels.forEach((p, i) => {
@@ -585,7 +737,7 @@ function renderCanvas() {
     ctx.clip();
     if (slot && slot.el) {
       drawSlotImage(ctx, slot, p);
-    } else {
+    } else if (!hasBehind) {
       ctx.fillStyle = PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length];
       ctx.fillRect(p.x, p.y, p.w, p.h);
       ctx.strokeStyle = 'rgba(17,17,17,0.05)';
@@ -639,6 +791,21 @@ function renderCanvas() {
       ctx.lineWidth = 5;
       ctx.strokeRect(2.5, 2.5, CW - 5, CH - 5);
     }
+  }
+
+  // Phase 5 — logos / frames on top (never treated)
+  drawLayers('top');
+  const al = state.activeLayer !== null ? state.layers[state.activeLayer] : null;
+  if (al) {
+    const r = layerRect(al);
+    const x0 = Math.max(0, r.x), y0 = Math.max(0, r.y);
+    const x1 = Math.min(CW, r.x + r.w), y1 = Math.min(CH, r.y + r.h);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(193,18,31,0.85)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([16, 10]);
+    ctx.strokeRect(x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4);
+    ctx.restore();
   }
 }
 
@@ -792,6 +959,18 @@ function panelAtPoint(clientX, clientY) {
 }
 
 canvas.addEventListener('mousedown', e => {
+  // Active library layer — fill layers capture any drag, free layers only when grabbed
+  const al = state.activeLayer !== null ? state.layers[state.activeLayer] : null;
+  if (al) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = CW / rect.width;
+    const cx = (e.clientX - rect.left) * scale, cy = (e.clientY - rect.top) * scale;
+    const r = layerRect(al);
+    if (al.fit === 'fill' || (cx >= r.x && cx < r.x + r.w && cy >= r.y && cy < r.y + r.h)) {
+      drag = { layer: state.activeLayer, lastX: e.clientX, lastY: e.clientY };
+      return;
+    }
+  }
   // Overlay drag takes priority when overlay is active
   if (state.activeIsOverlay && state.overlaySlot?.cutoutEl) {
     drag = { isOverlay: true, lastX: e.clientX, lastY: e.clientY };
@@ -808,6 +987,28 @@ canvas.addEventListener('mousedown', e => {
 
 window.addEventListener('mousemove', e => {
   if (!drag) return;
+
+  if (drag.layer !== undefined) {
+    const l = state.layers[drag.layer];
+    if (!l) { drag = null; return; }
+    const scale = CW / canvas.clientWidth;
+    const dx = (e.clientX - drag.lastX) * scale;
+    const dy = (e.clientY - drag.lastY) * scale;
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
+    if (l.fit === 'fill') {
+      const r = layerRect(l);
+      const maxOffX = Math.max(0.1, (r.w - CW) / 2), maxOffY = Math.max(0.1, (r.h - CH) / 2);
+      l.x = Math.max(-100, Math.min(100, l.x + (dx / maxOffX) * 100));
+      l.y = Math.max(-100, Math.min(100, l.y + (dy / maxOffY) * 100));
+    } else {
+      l.x = Math.max(-CW, Math.min(CW, l.x + dx));
+      l.y = Math.max(-CH, Math.min(CH, l.y + dy));
+    }
+    syncLayerControls();
+    renderCanvas();
+    return;
+  }
 
   if (drag.isOverlay) {
     const slot = state.overlaySlot;
@@ -856,6 +1057,16 @@ window.addEventListener('mouseup', () => { drag = null; });
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
 
+  const al = state.activeLayer !== null ? state.layers[state.activeLayer] : null;
+  if (al) {
+    const dir = e.deltaY > 0 ? -1 : 1;
+    if (al.fit === 'fill') al.zoom = Math.max(100, Math.min(300, al.zoom + dir * 5));
+    else al.width = Math.max(2, Math.min(150, al.width + dir));
+    syncLayerControls();
+    renderCanvas();
+    return;
+  }
+
   if (state.activeIsOverlay && state.overlaySlot?.cutoutEl) {
     const delta = e.deltaY > 0 ? -0.05 : 0.05;
     state.overlaySlot.zoom = Math.max(0.1, Math.min(5, (state.overlaySlot.zoom || 1) + delta));
@@ -877,7 +1088,9 @@ canvas.addEventListener('wheel', e => {
 function setActiveSlot(idx) {
   state.activeSlot = idx;
   state.activeIsOverlay = false;
+  state.activeLayer = null;
   buildSlots();
+  buildLayers();
   syncCropControls();
   renderCanvas();
 }
@@ -885,7 +1098,19 @@ function setActiveSlot(idx) {
 function setActiveOverlay() {
   state.activeSlot = null;
   state.activeIsOverlay = true;
+  state.activeLayer = null;
   buildSlots();
+  buildLayers();
+  syncCropControls();
+  renderCanvas();
+}
+
+function setActiveLayer(idx) {
+  state.activeSlot = null;
+  state.activeIsOverlay = false;
+  state.activeLayer = idx;
+  buildSlots();
+  buildLayers();
   syncCropControls();
   renderCanvas();
 }
@@ -1376,7 +1601,7 @@ function loadFileIntoSlot(file, idx) {
     const el = new Image();
     el.onload = () => {
       state.slots[idx] = { src: e.target.result, name: file.name, width: el.naturalWidth, height: el.naturalHeight, el, zoom: 1, offsetX: 0, offsetY: 0, cutout: false, cutoutEl: null, cutoutLoading: false, preserveColor: false };
-      if (state.activeSlot === null && !state.activeIsOverlay) state.activeSlot = idx;
+      if (state.activeSlot === null && !state.activeIsOverlay && state.activeLayer === null) state.activeSlot = idx;
       buildSlots(); syncCropControls(); renderCanvas(); updateUI();
       showToast(`Panel ${idx+1} loaded`, 'success');
     };
@@ -1541,8 +1766,10 @@ async function applyBgRemovalOverlay() {
 document.getElementById('exportBtn').addEventListener('click', () => {
   const prev = state.activeSlot;
   const prevOverlay = state.activeIsOverlay;
+  const prevLayer = state.activeLayer;
   state.activeSlot = null;
   state.activeIsOverlay = false;
+  state.activeLayer = null;
   renderCanvas();
   try {
     const a = document.createElement('a');
@@ -1556,12 +1783,15 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   }
   state.activeSlot = prev;
   state.activeIsOverlay = prevOverlay;
+  state.activeLayer = prevLayer;
   renderCanvas();
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   state.slots = [];
   state.overlaySlot = null;
+  state.layers = [];
+  state.activeLayer = null;
   state.layout = '1up';
   state.activeSlot = null;
   state.activeIsOverlay = false;
@@ -1581,7 +1811,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('duoShadow').value = '#C1121F';
   document.getElementById('duoHighlight').value = '#F5F0E8';
   document.querySelectorAll('.duo-preset').forEach(b => b.classList.remove('active'));
-  buildTemplateGrid(); buildSlots(); syncCropControls(); renderCanvas(); updateUI();
+  buildTemplateGrid(); buildSlots(); buildLayers(); syncCropControls(); renderCanvas(); updateUI();
 });
 
 function updateUI() {
@@ -1590,9 +1820,10 @@ function updateUI() {
   const filled = state.slots.filter(Boolean).length;
   document.getElementById('slotCount').textContent = `${filled}/${n}`;
 
-  // 1up: allow export with just the background; multi-panel: require ≥2
+  // 1up: allow export with just the background (photo or library backdrop); multi-panel: require ≥2
+  const hasBehind = state.layers.some(l => l.role === 'behind');
   if (state.layout === '1up') {
-    document.getElementById('exportBtn').disabled = !state.slots[0];
+    document.getElementById('exportBtn').disabled = !state.slots[0] && !hasBehind;
   } else {
     document.getElementById('exportBtn').disabled = filled < 2;
   }
@@ -1603,8 +1834,413 @@ function updateUI() {
   document.getElementById('exportMeta').innerHTML = `<span>${fname}.jpg</span> · 1920×1080 · ${document.getElementById('qualitySlider').value}% quality`;
 
   const overlayNote = (state.layout === '1up' && state.overlaySlot?.cutout) ? ' · portrait overlay' : '';
-  document.getElementById('previewLabel').textContent = `${layout.label} template · ${filled} of ${n} filled${overlayNote}`;
+  const layerNote = state.layers.length ? ` · ${state.layers.length} layer${state.layers.length > 1 ? 's' : ''}` : '';
+  document.getElementById('previewLabel').textContent = `${layout.label} template · ${filled} of ${n} filled${overlayNote}${layerNote}`;
 }
+
+// Library & layers
+// Shared logos/backgrounds live in assets/ next to this file, described by assets/manifest.json.
+// Served over http the library is read from the repo (read-only). In Chrome/Edge, "Connect folder"
+// opens the local assets/ folder with write access, so saves land in the repo ready to commit.
+const LIB_DIR = 'assets';
+// Library editing (connect folder, save, delete) is for maintainers: shown when the page is opened
+// from disk, or on the hosted site with ?edit in the URL. Everyone else just reads assets/.
+const EDIT_MODE = location.protocol === 'file:' || new URLSearchParams(location.search).has('edit');
+document.body.classList.toggle('edit-mode', EDIT_MODE);
+const LAYER_KEYS = ['role', 'fit', 'anchor', 'width', 'zoom', 'x', 'y', 'opacity'];
+const LAYER_DEFAULTS = { role: 'top', fit: 'free', anchor: 'tl', width: 100, zoom: 100, x: 0, y: 0, opacity: 100 };
+const IMAGE_EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg' };
+
+let library = { items: [], manifest: { version: 1, items: [] }, source: null, dir: null, pendingDir: null };
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+function slugify(s) { return s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').replace(/-+/g, '-') || 'image'; }
+function pickLayerSettings(src) {
+  const out = {};
+  LAYER_KEYS.forEach(k => { if (src[k] !== undefined) out[k] = src[k]; });
+  return out;
+}
+function activeLayerObj() { return state.activeLayer !== null ? state.layers[state.activeLayer] : null; }
+
+// Tiny IndexedDB key/value store — remembers the connected folder between sessions
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('bd-compositor', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const r = db.transaction('kv').objectStore('kv').get(key);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbSet(key, val) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+async function loadLibraryFromHttp() {
+  // file:// can't fetch the manifest, and images loaded from disk would taint the canvas on export
+  if (!location.protocol.startsWith('http')) return;
+  try {
+    const res = await fetch(`${LIB_DIR}/manifest.json`, { cache: 'no-cache' });
+    if (!res.ok) return;
+    const manifest = await res.json();
+    manifest.items = Array.isArray(manifest.items) ? manifest.items : [];
+    library = { ...library, manifest, source: 'http',
+      items: manifest.items.map(it => ({ ...it, src: `${LIB_DIR}/${encodeURIComponent(it.file)}` })) };
+  } catch (err) {
+    console.warn('Library manifest not loaded', err);
+  }
+}
+
+async function readManifest(dir) {
+  try {
+    const file = await (await dir.getFileHandle('manifest.json')).getFile();
+    const m = JSON.parse(await file.text());
+    return { version: 1, ...m, items: Array.isArray(m.items) ? m.items : [] };
+  } catch {
+    return { version: 1, items: [] };
+  }
+}
+
+async function useLibraryFolder(dir) {
+  // Accept the repo root as well as assets/ itself
+  try { await dir.getFileHandle('manifest.json'); }
+  catch { try { dir = await dir.getDirectoryHandle(LIB_DIR); } catch {} }
+  const manifest = await readManifest(dir);
+  const items = await Promise.all(manifest.items.map(async it => {
+    try { return { ...it, src: URL.createObjectURL(await (await dir.getFileHandle(it.file)).getFile()) }; }
+    catch { console.warn(`Library file missing: ${it.file}`); return null; }
+  }));
+  library = { items: items.filter(Boolean), manifest, source: 'folder', dir, pendingDir: null };
+}
+
+async function connectLibraryFolder() {
+  if (!window.showDirectoryPicker) {
+    showToast('Connecting a folder needs Chrome or Edge', 'error');
+    return false;
+  }
+  try {
+    const dir = await window.showDirectoryPicker({ id: 'bd-library', mode: 'readwrite' });
+    await useLibraryFolder(dir);
+    try { await idbSet('libraryDir', library.dir); } catch {}
+    buildLibrary();
+    showToast(`Library folder connected · ${library.items.length} saved`, 'success');
+    return true;
+  } catch (err) {
+    if (err.name !== 'AbortError') { console.error(err); showToast('Could not open that folder', 'error'); }
+    return false;
+  }
+}
+
+async function reconnectLibraryFolder() {
+  try {
+    if (await library.pendingDir.requestPermission({ mode: 'readwrite' }) !== 'granted') return false;
+    await useLibraryFolder(library.pendingDir);
+    buildLibrary();
+    showToast(`Library folder reconnected · ${library.items.length} saved`, 'success');
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+async function ensureWritableLibrary() {
+  if (library.source === 'folder') return true;
+  if (library.pendingDir && await reconnectLibraryFolder()) return true;
+  return connectLibraryFolder();
+}
+
+async function initLibrary() {
+  try {
+    const dir = EDIT_MODE ? await idbGet('libraryDir') : null;
+    if (dir) {
+      if (await dir.queryPermission({ mode: 'readwrite' }) === 'granted') {
+        await useLibraryFolder(dir);
+        buildLibrary();
+        return;
+      }
+      library.pendingDir = dir;
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+  await loadLibraryFromHttp();
+  buildLibrary();
+}
+
+function buildLibrary() {
+  const grid = document.getElementById('libGrid');
+  grid.innerHTML = '';
+  if (!library.items.length) {
+    grid.innerHTML = !EDIT_MODE
+      ? `<div class="lib-empty">${library.source ? 'No shared logos or backgrounds yet.' : 'Shared library unavailable.'}<br>Use + Add image for a one-off.</div>`
+      : library.source || library.pendingDir
+      ? `<div class="lib-empty">No saved logos or backgrounds yet.<br>Add an image, then Save to library.</div>`
+      : `<div class="lib-empty">Shared library not loaded.<br>Click Connect folder and choose <b>assets/</b>.</div>`;
+  }
+  library.items.forEach(item => {
+    const role = item.role === 'behind' ? 'behind' : 'top';
+    const btn = document.createElement('button');
+    btn.className = 'lib-tile';
+    btn.title = `Add “${item.name}”`;
+    btn.innerHTML = `<img class="lib-tile-img checker" src="${esc(item.src)}" alt="" draggable="false"><span class="lib-badge ${role}">${role === 'top' ? 'Top' : 'Behind'}</span><span class="lib-tile-name">${esc(item.name)}</span>`;
+    btn.addEventListener('click', () => addLayerFromAsset(item));
+    grid.appendChild(btn);
+  });
+  document.getElementById('libStatus').textContent = !EDIT_MODE ? '' :
+    library.source === 'folder' ? 'editable' : library.source === 'http' ? 'read-only' : '';
+  document.getElementById('libConnectBtn').textContent =
+    library.source === 'folder' ? 'Change folder' : library.pendingDir ? 'Reconnect folder' : 'Connect folder';
+}
+
+function addLayer(src, makeProps, msg) {
+  const el = new Image();
+  el.onload = () => {
+    if (!el.naturalWidth || !el.naturalHeight) { showToast('Image has no size — use PNG, JPG or WebP', 'error'); return; }
+    state.layers.push({ ...LAYER_DEFAULTS, ...makeProps(el), src, el });
+    setActiveLayer(state.layers.length - 1);
+    updateUI();
+    if (msg) showToast(msg, 'success');
+  };
+  el.onerror = () => showToast('Could not load image', 'error');
+  el.src = src;
+}
+
+function addLayerFromAsset(item) {
+  addLayer(item.src, () => ({ assetId: item.id, name: item.name, blob: null, ...pickLayerSettings(item) }));
+}
+
+function addLayerFromFile(file) {
+  if (!file.type.startsWith('image/')) { showToast('Not an image file', 'error'); return; }
+  addLayer(URL.createObjectURL(file), el => {
+    // Guess sensible defaults: 16:9 images fill the frame, formats with alpha sit on top
+    const fullFrame = Math.abs(el.naturalWidth / el.naturalHeight - CW / CH) < 0.05;
+    const hasAlpha = /png|webp|gif|svg/.test(file.type);
+    return { assetId: null, name: file.name.replace(/\.[^.]+$/, ''), blob: file,
+      role: hasAlpha ? 'top' : 'behind', fit: fullFrame ? 'fill' : 'free' };
+  }, EDIT_MODE ? 'Added — Save to library to keep it' : 'Added');
+}
+
+function buildLayers() {
+  const list = document.getElementById('layerList');
+  list.innerHTML = '';
+  state.layers.forEach((l, i) => {
+    const row = document.createElement('div');
+    row.className = 'layer-row' + (state.activeLayer === i ? ' active' : '');
+    row.innerHTML = `
+      <img class="layer-thumb checker" src="${esc(l.src)}" alt="" draggable="false">
+      <div class="slot-info">
+        <div class="slot-filename">${esc(l.name || 'Untitled')}</div>
+        <div class="slot-dims">${l.role === 'top' ? 'On top' : 'Behind'} · ${l.fit === 'fill' ? 'Fill' : 'Free'}${l.assetId || !EDIT_MODE ? '' : ' · not saved'}</div>
+      </div>
+      <button class="layer-del" title="Remove from this image">✕</button>`;
+    row.addEventListener('click', () => setActiveLayer(i));
+    row.querySelector('.layer-del').addEventListener('click', e => {
+      e.stopPropagation();
+      state.layers.splice(i, 1);
+      if (state.activeLayer === i) state.activeLayer = null;
+      else if (state.activeLayer > i) state.activeLayer--;
+      buildLayers(); renderCanvas(); updateUI();
+    });
+    list.appendChild(row);
+  });
+  syncLayerControls();
+}
+
+function setLayerSlider(id, [min, max, step], val, unit) {
+  const s = document.getElementById(id);
+  s.min = min; s.max = max; s.step = step; s.value = val;
+  document.getElementById(id + 'Val').textContent = Math.round(val) + unit;
+}
+
+function syncLayerControls() {
+  const controls = document.getElementById('layerControls');
+  const l = activeLayerObj();
+  if (!l) { controls.classList.remove('visible'); return; }
+  controls.classList.add('visible');
+  const fill = l.fit === 'fill';
+  document.getElementById('layerTitle').textContent = `${l.name || 'Layer'} — placement`;
+  document.querySelectorAll('#layerRole [data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === l.role));
+  document.querySelectorAll('#layerFit [data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === l.fit));
+  document.querySelectorAll('#layerAnchor [data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === l.anchor));
+  document.getElementById('layerAnchorRow').style.display = fill ? 'none' : 'flex';
+  document.getElementById('layerSizeLabel').textContent = fill ? 'Zoom' : 'Width';
+  setLayerSlider('layerSize', fill ? [100, 300, 1] : [2, 150, 0.5], fill ? l.zoom : l.width, '%');
+  setLayerSlider('layerX', fill ? [-100, 100, 0.5] : [-CW, CW, 1], l.x, fill ? '%' : 'px');
+  setLayerSlider('layerY', fill ? [-100, 100, 0.5] : [-CH, CH, 1], l.y, fill ? '%' : 'px');
+  setLayerSlider('layerOpacity', [0, 100, 1], l.opacity, '%');
+  const nameInput = document.getElementById('layerName');
+  if (document.activeElement !== nameInput) nameInput.value = l.name || '';
+  document.getElementById('layerSave').textContent = l.assetId ? 'Update library' : 'Save to library';
+  document.getElementById('layerDelete').style.display = l.assetId ? '' : 'none';
+}
+
+document.getElementById('layerRole').addEventListener('click', e => {
+  const b = e.target.closest('[data-v]'), l = activeLayerObj();
+  if (!b || !l) return;
+  l.role = b.dataset.v;
+  buildLayers(); renderCanvas(); updateUI();
+});
+document.getElementById('layerFit').addEventListener('click', e => {
+  const b = e.target.closest('[data-v]'), l = activeLayerObj();
+  if (!b || !l || l.fit === b.dataset.v) return;
+  l.fit = b.dataset.v;
+  l.x = 0; l.y = 0;
+  buildLayers(); renderCanvas();
+});
+document.getElementById('layerAnchor').addEventListener('click', e => {
+  const b = e.target.closest('[data-v]'), l = activeLayerObj();
+  if (!b || !l) return;
+  l.anchor = b.dataset.v;
+  l.x = 0; l.y = 0;
+  syncLayerControls(); renderCanvas();
+});
+[
+  ['layerSize',    (l, v) => { if (l.fit === 'fill') l.zoom = v; else l.width = v; }],
+  ['layerX',       (l, v) => { l.x = v; }],
+  ['layerY',       (l, v) => { l.y = v; }],
+  ['layerOpacity', (l, v) => { l.opacity = v; }],
+].forEach(([id, set]) => {
+  document.getElementById(id).addEventListener('input', function() {
+    const l = activeLayerObj(); if (!l) return;
+    set(l, parseFloat(this.value));
+    syncLayerControls(); renderCanvas();
+  });
+});
+document.getElementById('layerReset').addEventListener('click', () => {
+  const l = activeLayerObj(); if (!l) return;
+  l.x = 0; l.y = 0; l.zoom = 100;
+  syncLayerControls(); renderCanvas();
+});
+document.getElementById('layerName').addEventListener('input', function() {
+  const l = activeLayerObj(); if (!l) return;
+  l.name = this.value;
+  buildLayers();
+});
+
+async function writeFile(dir, name, data) {
+  const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+  await w.write(data);
+  await w.close();
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Adds or updates the layer's entry in `manifest`; returns the image file to write if it's new
+async function upsertManifestEntry(manifest, l, name) {
+  let entry = l.assetId && manifest.items.find(it => it.id === l.assetId);
+  let newFile = null;
+  if (!entry) {
+    const base = slugify(name);
+    let id = base, n = 2;
+    while (manifest.items.some(it => it.id === id)) id = `${base}-${n++}`;
+    const blob = l.blob || await (await fetch(l.src)).blob();
+    newFile = { name: `${id}.${IMAGE_EXT[blob.type] || 'png'}`, blob };
+    entry = { id, file: newFile.name };
+    manifest.items.push(entry);
+  }
+  Object.assign(entry, { name }, pickLayerSettings(l));
+  return { entry, newFile };
+}
+
+async function saveLayerToLibrary() {
+  const l = activeLayerObj(); if (!l) return;
+  const name = (l.name || '').trim();
+  if (!name) { showToast('Give it a library name first', 'error'); document.getElementById('layerName').focus(); return; }
+
+  // No folder access (Safari/Firefox): download the files to drop into assets/ by hand
+  if (!window.showDirectoryPicker) {
+    try {
+      const manifest = JSON.parse(JSON.stringify(library.manifest));
+      const { newFile } = await upsertManifestEntry(manifest, l, name);
+      if (newFile) downloadBlob(newFile.blob, newFile.name);
+      downloadBlob(new Blob([JSON.stringify(manifest, null, 2) + '\n'], { type: 'application/json' }), 'manifest.json');
+      showToast('Downloaded — copy into assets/ and commit', 'success');
+    } catch (err) {
+      console.error(err); showToast('Save failed', 'error');
+    }
+    return;
+  }
+
+  if (!await ensureWritableLibrary()) return;
+  try {
+    const dir = library.dir;
+    const manifest = await readManifest(dir); // re-read so we never clobber edits made elsewhere
+    const { entry, newFile } = await upsertManifestEntry(manifest, l, name);
+    if (newFile) await writeFile(dir, newFile.name, newFile.blob);
+    await writeFile(dir, 'manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+    l.assetId = entry.id;
+    await useLibraryFolder(dir);
+    buildLibrary(); buildLayers();
+    showToast(`Saved “${name}” — commit assets/ to share it`, 'success');
+  } catch (err) {
+    console.error(err); showToast('Save failed', 'error');
+  }
+}
+
+async function deleteLayerFromLibrary() {
+  const l = activeLayerObj(); if (!l?.assetId) return;
+  if (!confirm(`Delete “${l.name}” from the shared library?\nIt stays on this image until you remove it.`)) return;
+  if (!window.showDirectoryPicker) { showToast('Deleting needs Chrome or Edge — or edit assets/manifest.json by hand', 'error'); return; }
+  if (!await ensureWritableLibrary()) return;
+  try {
+    const id = l.assetId;
+    const affected = state.layers.filter(x => x.assetId === id);
+    // Keep the pixels in memory so the layers survive the file being deleted
+    for (const x of affected) { x.blob = x.blob || await (await fetch(x.src)).blob(); x.assetId = null; }
+    const manifest = await readManifest(library.dir);
+    const entry = manifest.items.find(it => it.id === id);
+    if (entry) {
+      manifest.items = manifest.items.filter(it => it !== entry);
+      await writeFile(library.dir, 'manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+      try { await library.dir.removeEntry(entry.file); } catch {}
+    }
+    await useLibraryFolder(library.dir);
+    buildLibrary(); buildLayers();
+    showToast('Deleted from library — commit assets/ to share the change', 'success');
+  } catch (err) {
+    console.error(err); showToast('Delete failed', 'error');
+  }
+}
+
+document.getElementById('layerSave').addEventListener('click', saveLayerToLibrary);
+document.getElementById('layerDelete').addEventListener('click', deleteLayerFromLibrary);
+document.getElementById('libAddBtn').addEventListener('click', () => document.getElementById('layerFileInput').click());
+document.getElementById('layerFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) addLayerFromFile(file);
+  e.target.value = '';
+});
+document.getElementById('libConnectBtn').addEventListener('click', async () => {
+  if (library.pendingDir && await reconnectLibraryFolder()) return;
+  connectLibraryFolder();
+});
+const layersSection = document.getElementById('layersSection');
+layersSection.addEventListener('dragover', e => { if (slotDragSrc === null) e.preventDefault(); });
+layersSection.addEventListener('drop', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.dataTransfer.files.length) addLayerFromFile(e.dataTransfer.files[0]);
+});
 
 let toastTimer;
 function showToast(msg, type='') {
@@ -1617,9 +2253,11 @@ function showToast(msg, type='') {
 buildTemplateGrid();
 buildSlots();
 buildDuoPresets();
+buildLayers();
 renderCanvas();
 applyPreviewZoom();
 updateUI();
+initLibrary();
 
 (function() {
   const btn   = document.getElementById('guideBtn');
